@@ -25,7 +25,7 @@ import {
   getStatusText,
   getImageUrl,
 } from '@/utils/helpers';
-import type { JobRequest, Proposal } from '@/types';
+import type { JobRequest, Proposal, Skill } from '@/types';
 import styles from './MyJobs.module.css';
 
 type TabType = 'active' | 'in_progress' | 'completed';
@@ -183,8 +183,8 @@ const MyJobs = () => {
                     key={tab}
                     onClick={() => setActiveTab(tab)}
                     className={`w-full text-right px-4 py-3 rounded-lg transition-colors flex items-center justify-between ${activeTab === tab
-                        ? 'bg-primary-50 text-primary-700 font-medium'
-                        : 'hover:bg-gray-50'
+                      ? 'bg-primary-50 text-primary-700 font-medium'
+                      : 'hover:bg-gray-50'
                       }`}
                     style={activeTab !== tab ? { color: 'rgb(var(--text-secondary))' } : {}}
                   >
@@ -274,7 +274,7 @@ const MyJobs = () => {
 
                           {job.skills && job.skills.length > 0 && (
                             <div className="flex flex-wrap gap-2 mb-4">
-                              {job.skills.map((skill) => (
+                              {job.skills.map((skill: Skill) => (
                                 <span
                                   key={skill.id}
                                   className="px-3 py-1 bg-gray-100 text-gray-700 text-xs rounded-full"
