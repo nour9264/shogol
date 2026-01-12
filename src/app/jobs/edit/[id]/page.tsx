@@ -59,7 +59,7 @@ export default function EditJobPage() {
 
       // Check if job can be edited (only Pending status)
       if (jobData.status !== 'Pending') {
-        const statusMessage = jobData.status === 'InProgress' 
+        const statusMessage = jobData.status === 'InProgress'
           ? (isArabic ? 'لا يمكن تعديل المشروع. تم قبول عرض لهذا المشروع.' : 'Cannot edit project. An offer has been accepted for this project.')
           : jobData.status === 'Completed'
             ? (isArabic ? 'لا يمكن تعديل المشروع. تم إكمال هذا المشروع.' : 'Cannot edit project. This project has been completed.')
@@ -92,23 +92,23 @@ export default function EditJobPage() {
         description: data.description,
         budget: data.budget,
         durationInDays: data.durationInDays,
-        deadline: data.deadline || null,
+        deadline: data.deadline || undefined,
       });
-      
+
       success(isArabic ? 'تم تحديث المشروع بنجاح' : 'Project updated successfully');
       router.push(`/jobs/${id}`);
     } catch (error: any) {
       const errorMessage = error.response?.data?.message || '';
-      
+
       // Handle specific error messages from API
       if (errorMessage.toLowerCase().includes('offer has been accepted') || errorMessage.toLowerCase().includes('cannot update')) {
-        showError(isArabic 
-          ? 'لا يمكن تعديل المشروع. تم قبول عرض لهذا المشروع.' 
+        showError(isArabic
+          ? 'لا يمكن تعديل المشروع. تم قبول عرض لهذا المشروع.'
           : 'Cannot update job request. An offer has been accepted for this project.');
         router.push(`/jobs/${id}`);
       } else if (errorMessage.toLowerCase().includes('contract exists')) {
-        showError(isArabic 
-          ? 'لا يمكن تعديل المشروع. يوجد عقد لهذا المشروع.' 
+        showError(isArabic
+          ? 'لا يمكن تعديل المشروع. يوجد عقد لهذا المشروع.'
           : 'Cannot update job request. A contract exists for this project.');
         router.push(`/jobs/${id}`);
       } else if (errorMessage.toLowerCase().includes('not found')) {
@@ -143,7 +143,7 @@ export default function EditJobPage() {
       <div className="container-custom max-w-3xl">
         {/* Header */}
         <div className="mb-8">
-          <Link 
+          <Link
             href={`/jobs/${id}`}
             className="inline-flex items-center gap-2 text-gray-600 dark:text-gray-400 hover:text-primary-600 mb-4"
           >
@@ -160,8 +160,8 @@ export default function EditJobPage() {
 
         {/* Form */}
         <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-soft p-8 transition-colors">
-          <form 
-            onSubmit={handleSubmit(onSubmit)} 
+          <form
+            onSubmit={handleSubmit(onSubmit)}
             onKeyDown={(e) => {
               if (e.key === 'Enter' || e.code === 'Enter' || e.keyCode === 13) {
                 const tagName = (e.target as HTMLElement).tagName.toLowerCase();
@@ -284,8 +284,8 @@ export default function EditJobPage() {
               >
                 <FaSave />
                 <span>
-                  {saving 
-                    ? (isArabic ? 'جاري الحفظ...' : 'Saving...') 
+                  {saving
+                    ? (isArabic ? 'جاري الحفظ...' : 'Saving...')
                     : (isArabic ? 'حفظ التغييرات' : 'Save Changes')}
                 </span>
               </button>
