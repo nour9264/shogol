@@ -1,0 +1,22 @@
+/* Modal component specific styles */
+/* Most styles are handled by Tailwind, but custom animations can go here */
+
+.modalBackdrop {
+  backdrop-filter: blur(4px);
+}
+
+.modalContent {
+  animation: slideDown 0.3s ease-out;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-20px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
