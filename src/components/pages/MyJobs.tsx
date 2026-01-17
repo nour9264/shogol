@@ -69,7 +69,23 @@ const MyJobs = () => {
     setLoadingProposals(true);
     try {
       const response = await proposalService.getMyProposals(1, 50);
-      setProposals(response.data.proposals || []);
+      console.log('📥 Raw proposals response:', response.data);
+
+      // Handle .NET serialization format
+      let proposalsList: Proposal[] = [];
+
+      if (Array.isArray(response.data)) {
+        proposalsList = response.data;
+      } else if (response.data.$values) {
+        proposalsList = response.data.$values;
+      } else if (response.data.proposals) {
+        proposalsList = response.data.proposals;
+      }
+
+      console.log('✅ Parsed proposals:', proposalsList);
+      console.log('📊 Proposal statuses:', proposalsList.map(p => ({ id: p.id, status: p.status })));
+
+      setProposals(proposalsList);
     } catch (error) {
       console.error('Error fetching proposals:', error);
     }
@@ -237,8 +253,8 @@ const MyJobs = () => {
                     <div className="space-y-4">
                       {filteredJobs.map((job) => (
                         <div key={job.id} className="border border-gray-200 rounded-xl p-6 hover:shadow-md transition-shadow">
-                          <div className="flex items-start justify-between mb-4">
-                            <div>
+                          <div className="flex items-start justify-between mb-4 gap-4">
+                            <div className="flex-1 min-w-0">
                               <Link
                                 href={`/jobs/${job.id}`}
                                 className="text-lg font-bold hover:text-primary-600 transition-colors"
@@ -246,7 +262,7 @@ const MyJobs = () => {
                               >
                                 {job.title}
                               </Link>
-                              <p className="text-sm mt-1 line-clamp-2" style={{ color: 'rgb(var(--text-secondary))' }}>{job.description}</p>
+                              <p className="text-sm mt-1 line-clamp-2 break-all" style={{ color: 'rgb(var(--text-secondary))' }}>{job.description}</p>
                             </div>
                             <Badge variant={getStatusColor(job.status) as any}>
                               {getStatusText(job.status)}
@@ -334,8 +350,8 @@ const MyJobs = () => {
                     <div className="space-y-4">
                       {filteredProposals.map((proposal) => (
                         <div key={proposal.id} className="border border-gray-200 rounded-xl p-6 hover:shadow-md transition-shadow">
-                          <div className="flex items-start justify-between mb-4">
-                            <div>
+                          <div className="flex items-start justify-between mb-4 gap-4">
+                            <div className="flex-1 min-w-0">
                               <Link
                                 href={`/jobs/${proposal.jobRequestId}`}
                                 className="text-lg font-bold hover:text-primary-600 transition-colors"
@@ -343,7 +359,7 @@ const MyJobs = () => {
                               >
                                 عرضك على الطلب
                               </Link>
-                              <p className="text-sm mt-1 line-clamp-2" style={{ color: 'rgb(var(--text-secondary))' }}>{proposal.description}</p>
+                              <p className="text-sm mt-1 line-clamp-2 break-all" style={{ color: 'rgb(var(--text-secondary))' }}>{proposal.description}</p>
                             </div>
                             <Badge variant={getStatusColor(proposal.status) as any}>
                               {getStatusText(proposal.status)}
@@ -383,12 +399,24 @@ const MyJobs = () => {
                               </button>
                             )}
                             {proposal.status === 'Accepted' && (
-                              <Link
-                                href={`/messages?user=${proposal.freelancerId}${proposal.freelancerName ? `&name=${encodeURIComponent(proposal.freelancerName)}` : ''}${proposal.freelancerAvatar ? `&avatar=${encodeURIComponent(proposal.freelancerAvatar)}` : ''}`}
+                              <button
+                                onClick={async () => {
+                                  if (confirm('هل أنت متأكد من تسليم الطلب؟ (Confirm Job Delivery?)')) {
+                                    try {
+                                      await jobService.markJobAsCompleted(proposal.jobRequestId);
+                                      success('تم تسليم الطلب بنجاح (Job Delivered Successfully)');
+                                      // Refresh lists
+                                      fetchMyJobs();
+                                      fetchMyProposals();
+                                    } catch (error) {
+                                      showError('فشل تسليم الطلب');
+                                    }
+                                  }
+                                }}
                                 className="btn btn-primary text-sm"
                               >
                                 تسليم الطلب
-                              </Link>
+                              </button>
                             )}
                           </div>
                         </div>

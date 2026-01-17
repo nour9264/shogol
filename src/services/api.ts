@@ -13,6 +13,7 @@ declare global {
 
 export const API_BASE_URL = 'https://unceriferous-eda-nonseasonally.ngrok-free.dev/api';
 export const HUB_URL = API_BASE_URL.replace('/api', '/chatHub');
+export const NOTIFICATION_HUB_URL = API_BASE_URL.replace('/api', '/notificationHub');
 
 // Extend AxiosRequestConfig to include metadata
 interface ExtendedAxiosRequestConfig extends InternalAxiosRequestConfig {
@@ -193,7 +194,11 @@ api.interceptors.response.use(
     console.error('%c────────────────────────────────────────────────────────────────────────────────', logStyles.divider);
 
     // Handle 401 Unauthorized
-    if (error.response?.status === 401 && typeof window !== 'undefined') {
+    // Don't redirect if we are already on login page or if it's a login request failure
+    const isLoginRequest = config?.url?.toLowerCase().includes('/auth/login');
+    const isLoginPage = typeof window !== 'undefined' && window.location.pathname === '/login';
+
+    if (error.response?.status === 401 && typeof window !== 'undefined' && !isLoginRequest && !isLoginPage) {
       console.warn('%c[UNAUTHORIZED] Token expired or invalid. Redirecting to login...', logStyles.error);
       localStorage.removeItem('token');
       localStorage.removeItem('user');
@@ -396,6 +401,9 @@ export const jobService = {
     pageSize?: number;
   }) => api.post('/JobRequest/search', filters),
 
+  autocomplete: (searchTerm: string, limit = 8) =>
+    api.get(`/JobRequest/autocomplete?q=${encodeURIComponent(searchTerm)}&limit=${limit}`),
+
   getMyJobs: (pageNumber = 1, pageSize = 10) =>
     api.get(`/JobRequest/my-requests?pageNumber=${pageNumber}&pageSize=${pageSize}`),
 
@@ -404,6 +412,9 @@ export const jobService = {
 
   deleteJob: (jobRequestId: number) =>
     api.delete<{ message: string }>(`/JobRequest/${jobRequestId}`),
+
+  markJobAsCompleted: (jobRequestId: number) =>
+    api.post<{ message: string }>(`/JobRequest/${jobRequestId}/freelancer-completed`),
 };
 
 // ==================== PROPOSAL ENDPOINTS ====================
@@ -469,6 +480,7 @@ export interface Conversation {
   lastMessage?: string;
   lastMessageTime?: string;
   unreadCount: number;
+  isOnline?: boolean;
 }
 
 export const chatService = {
@@ -478,9 +490,9 @@ export const chatService = {
     attachment?: File;
   }) => {
     const formData = new FormData();
-    formData.append('receiverId', data.receiverId);
-    if (data.content) formData.append('content', data.content);
-    if (data.attachment) formData.append('attachment', data.attachment);
+    formData.append('ReceiverId', data.receiverId);
+    if (data.content) formData.append('Content', data.content);
+    if (data.attachment) formData.append('Attachment', data.attachment);
 
     return api.post<{ messageId: number; message: string }>('/Chat/send', formData, {
       headers: {
@@ -490,33 +502,101 @@ export const chatService = {
   },
 
   getConversations: async () => {
-    const response = await api.get<ConversationResponse[]>('/Chat/conversations');
-    console.log('🔍 Raw conversations response:', response.data);
+    try {
+      const response = await api.get<any>('/Chat/conversations');
+      console.log('🔍 Raw conversations response:', response.data);
 
-    // Map backend response to frontend format
-    const mapped: Conversation[] = (response.data || []).map(conv => {
-      const mappedConv = {
-        id: conv.id,
-        participantId: conv.otherUserId,
-        participantName: conv.otherUserName,
-        participantAvatar: conv.otherUserAvatar,
-        lastMessage: conv.lastMessage,
-        lastMessageTime: conv.lastMessageAt,
-        unreadCount: conv.unreadCount || 0,
-      };
-      console.log('🔍 Mapped conversation:', mappedConv);
-      return mappedConv;
-    });
+      let rawData: any[] = [];
+      if (Array.isArray(response.data)) {
+        rawData = response.data;
+      } else if (response.data && typeof response.data === 'object') {
+        rawData = response.data.conversations || response.data.items || response.data.data || [];
+      }
 
-    console.log('🔍 Mapped conversations:', mapped);
-    return { ...response, data: mapped };
+      // Map backend response to frontend format
+      const mapped: Conversation[] = rawData
+        .filter(conv => conv !== null && conv !== undefined)
+        .map(conv => {
+          const mappedConv = {
+            id: conv.id || conv.Id,
+            participantId: conv.otherUserId || conv.OtherUserId,
+            participantName: conv.otherUserName || conv.OtherUserName,
+            participantAvatar: conv.otherUserAvatar || conv.OtherUserAvatar,
+            lastMessage: conv.lastMessage || conv.LastMessage,
+            lastMessageTime: conv.lastMessageAt || conv.LastMessageAt,
+            unreadCount: conv.unreadCount || conv.UnreadCount || 0,
+            isOnline: conv.isOnline || conv.IsOnline || false,
+          };
+          return mappedConv;
+        });
+
+      console.log('🔍 Mapped conversations:', mapped);
+      return { ...response, data: mapped };
+      // ...
+    } catch (error: any) {
+      // Handle 404 (No conversations found) gracefully
+      if (error.response && error.response.status === 404) {
+        console.log('⚠️ 404 received for conversations, treating as empty list.');
+        return { data: [], status: 404, statusText: 'Not Found', headers: {}, config: error.config };
+      }
+
+      console.error('❌ Failed to get conversations:', error);
+      if (error.response) {
+        console.error('❌ Error Response Data:', error.response.data);
+      }
+      throw error;
+    }
   },
 
-  getMessages: (conversationId: number, pageNumber = 1, pageSize = 50) =>
-    api.get<ChatMessage[]>(`/Chat/conversations/${conversationId}/messages?pageNumber=${pageNumber}&pageSize=${pageSize}`),
+  getMessages: async (conversationId: number, pageNumber = 1, pageSize = 50) => {
+    try {
+      const response = await api.get<any>(`/Chat/conversations/${conversationId}/messages?pageNumber=${pageNumber}&pageSize=${pageSize}`);
+
+      let rawData: any[] = [];
+      if (Array.isArray(response.data)) {
+        rawData = response.data;
+      } else if (response.data && typeof response.data === 'object') {
+        // Try to find the array in common properties
+        rawData = response.data.messages || response.data.items || response.data.data || [];
+      }
+
+      // Map backend response to frontend format
+      const mapped: ChatMessage[] = rawData
+        .filter(msg => msg !== null && msg !== undefined)
+        .map(msg => ({
+          id: msg.id || msg.Id,
+          conversationId: msg.conversationId || msg.ConversationId,
+          senderId: msg.senderId || msg.SenderId,
+          senderName: msg.senderName || msg.SenderName,
+          senderAvatar: msg.senderAvatar || msg.SenderAvatar,
+          content: msg.content || msg.Content,
+          fileUrl: msg.fileUrl || msg.FileUrl,
+          fileName: msg.fileName || msg.FileName,
+          sentAt: msg.sentAt || msg.SentAt,
+          isRead: msg.isRead || msg.IsRead,
+        }));
+
+      return { ...response, data: mapped };
+    } catch (error: any) {
+      if (error.response && error.response.status === 404) {
+        console.log('⚠️ 404 received for messages, treating as empty list.');
+        return { data: [], status: 404, statusText: 'Not Found', headers: {}, config: error.config };
+      }
+      console.error('❌ Failed to get messages:', error);
+      throw error;
+    }
+  },
 
   markAsRead: (conversationId: number) =>
     api.post<{ message: string }>(`/Chat/conversations/${conversationId}/mark-read`),
+
+  // Check if a specific user is online
+  checkUserOnlineStatus: (userId: string) =>
+    api.get<{ userId: string; isOnline: boolean; timestamp: string }>(`/Chat/user/${userId}/online-status`),
+
+  // Get all online users
+  getOnlineUsers: () =>
+    api.get<{ onlineUsers: string[]; count: number; timestamp: string }>('/Chat/online-users'),
 };
 
 // ==================== NOTIFICATION ENDPOINTS ====================
@@ -533,15 +613,21 @@ export interface Notification {
 }
 
 export const notificationService = {
+  // Get all notifications with pagination
   getNotifications: (pageNumber = 1, pageSize = 20) =>
-    api.get<{ notifications: Notification[]; totalCount: number }>(`/Notification?pageNumber=${pageNumber}&pageSize=${pageSize}`),
+    api.get<any>(`/Notification?pageNumber=${pageNumber}&pageSize=${pageSize}`),
 
-  getUnreadCount: () => api.get<{ unreadCount: number }>('/Notification/unread-count'),
+  // Get unread notification count
+  getUnreadCount: () =>
+    api.get<{ unreadCount: number }>('/Notification/unread-count'),
 
+  // Mark a specific notification as read
   markAsRead: (notificationId: number) =>
     api.post<{ message: string }>(`/Notification/${notificationId}/mark-read`),
 
-  markAllAsRead: () => api.post<{ message: string }>('/Notification/mark-all-read'),
+  // Mark all notifications as read
+  markAllAsRead: () =>
+    api.post<{ message: string }>('/Notification/mark-all-read'),
 };
 
 export default api;

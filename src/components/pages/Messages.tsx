@@ -37,6 +37,41 @@ const Messages = () => {
   const [isTyping, setIsTyping] = useState(false);
   const [typingTimeout, setTypingTimeout] = useState<NodeJS.Timeout | null>(null);
   const typingIndicatorTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const [onlineUsers, setOnlineUsers] = useState<Set<string>>(new Set());
+
+  // Handle User Status Changes (Real-time via SignalR)
+  useEffect(() => {
+    const unsubscribe = signalRService.onUserStatusChange((status) => {
+      console.log('👤 User Status Update:', status);
+      setOnlineUsers(prev => {
+        const newSet = new Set(prev);
+        const userId = String(status.userId);
+        if (status.isOnline) {
+          newSet.add(userId);
+        } else {
+          newSet.delete(userId);
+        }
+        return newSet;
+      });
+    });
+    return unsubscribe;
+  }, []);
+
+  // Load initial online users from API on mount
+  useEffect(() => {
+    const loadInitialOnlineUsers = async () => {
+      try {
+        const response = await chatService.getOnlineUsers();
+        const users = response.data.onlineUsers || [];
+        setOnlineUsers(new Set(users.map(String)));
+        console.log('✅ Loaded initial online users from API:', users.length);
+      } catch (error) {
+        console.error('❌ Failed to load initial online users:', error);
+      }
+    };
+
+    loadInitialOnlineUsers();
+  }, []);
 
   // SignalR hook for real-time messages
   // Don't filter by conversationId here - we'll filter in the effect
@@ -52,16 +87,36 @@ const Messages = () => {
   }, [isConnected, selectedConversation]);
 
   // Load conversations on mount and periodically refresh
+  // Load conversations and initial online state
   useEffect(() => {
     loadConversations();
-
-    // Refresh conversations every 30 seconds to catch new ones
-    const interval = setInterval(() => {
-      loadConversations();
-    }, 30000);
-
+    // Refresh conversations every 30 seconds
+    const interval = setInterval(loadConversations, 30000);
     return () => clearInterval(interval);
   }, []);
+
+  // Sync onlineUsers with loaded conversations (Use Initial Data from Backend)
+  useEffect(() => {
+    if (conversations.length > 0) {
+      setOnlineUsers(prev => {
+        const newSet = new Set(prev);
+        let changes = false;
+        conversations.forEach(c => {
+          if (c.isOnline) {
+            const pid = String(c.participantId);
+            if (!newSet.has(pid)) {
+              console.log(`👤 Initial Online Status from Backend for ${c.participantName}: Online`);
+              newSet.add(pid);
+              changes = true;
+            }
+          }
+        });
+        return changes ? newSet : prev;
+      });
+    }
+  }, [conversations]);
+
+
 
   // Handle URL parameter for direct messaging
   useEffect(() => {
@@ -107,9 +162,12 @@ const Messages = () => {
 
   // Load messages when conversation is selected and join SignalR group
   useEffect(() => {
+    console.log('🔄 selectedConversation changed:', selectedConversation?.id, selectedConversation?.participantName);
+
     if (selectedConversation) {
       // Skip loading for temporary conversations (new chats)
       if (selectedConversation.id !== -1) {
+        console.log('📨 Loading messages for conversation:', selectedConversation.id);
         loadMessages(selectedConversation.id);
 
         // Join conversation group for SignalR events (typing, read receipts, etc.)
@@ -120,10 +178,12 @@ const Messages = () => {
         }
       } else {
         // Temporary conversation - no messages yet
+        console.log('📭 Temporary conversation, clearing messages');
         setMessages([]);
         setLoadingMessages(false);
       }
     } else {
+      console.log('❌ No conversation selected, clearing messages');
       setMessages([]);
     }
 
@@ -253,19 +313,43 @@ const Messages = () => {
     prevLastMessageIdRef.current = lastMessageId;
   }, [messages]);
 
+  // Auto-scroll when typing indicator appears
+  useEffect(() => {
+    if (isTyping) {
+      scrollToBottom();
+    }
+  }, [isTyping]);
+
   // Handle typing indicators from SignalR
   useEffect(() => {
     if (!selectedConversation || selectedConversation.id === -1) return;
 
     const unsubscribe = signalRService.onTyping((typing: TypingIndicator) => {
-      if (typing.conversationId === selectedConversation.id && typing.userId !== user?.id) {
+      // Normalize comparison
+      const typingUserId = String(typing.userId);
+      const currentParticipantId = String(selectedConversation.participantId);
+
+      // If the typing user IS the participant, show typing status
+      // And ensure it's not the current user typing
+      if (typing.conversationId === selectedConversation.id && typingUserId === currentParticipantId && typing.userId !== user?.id) {
         setIsTyping(typing.isTyping);
 
-        // Auto-hide typing indicator after 3 seconds
+        // Infer that they are online if they are typing!
         if (typing.isTyping) {
-          if (typingIndicatorTimeoutRef.current) {
-            clearTimeout(typingIndicatorTimeoutRef.current);
-          }
+          setOnlineUsers(prev => {
+            const newSet = new Set(prev);
+            newSet.add(typingUserId);
+            return newSet;
+          });
+        }
+
+        // Clear existing timeout
+        if (typingIndicatorTimeoutRef.current) {
+          clearTimeout(typingIndicatorTimeoutRef.current);
+        }
+
+        // Set timeout to stop typing indicator after 3 seconds
+        if (typing.isTyping) {
           typingIndicatorTimeoutRef.current = setTimeout(() => {
             setIsTyping(false);
           }, 3000);
@@ -279,7 +363,7 @@ const Messages = () => {
         clearTimeout(typingIndicatorTimeoutRef.current);
       }
     };
-  }, [selectedConversation, user?.id]);
+  }, [selectedConversation, signalRService, user?.id, setOnlineUsers]);
 
   // Handle read receipts from SignalR
   useEffect(() => {
@@ -350,6 +434,17 @@ const Messages = () => {
       console.log('📋 Conversations loaded:', response.data);
       const conversationsList = response.data || [];
       setConversations(conversationsList);
+
+      // CRITICAL FIX: Update selectedConversation reference if it exists
+      // When conversations refresh, the objects are new even if IDs are same
+      // This ensures the useEffect dependency triggers correctly
+      if (selectedConversation && selectedConversation.id !== -1) {
+        const updatedConversation = conversationsList.find(c => c.id === selectedConversation.id);
+        if (updatedConversation) {
+          console.log('🔄 Updating selectedConversation reference after refresh');
+          setSelectedConversation(updatedConversation);
+        }
+      }
 
       // If we have a URL parameter for a user, try to find the conversation
       const targetUserId = searchParams.get('user');
@@ -496,7 +591,7 @@ const Messages = () => {
       });
       console.log('✅ Message sent successfully:', response.data);
 
-      // Update conversation list immediately
+      // Refresh conversations to update timestamps
       await loadConversations();
 
       // If this was a temporary conversation, find and select the real one
@@ -601,7 +696,7 @@ const Messages = () => {
       <div className="w-full shadow-soft overflow-hidden flex h-full transition-colors" style={{ backgroundColor: 'rgb(var(--bg-secondary))' }}>
         <div className="flex h-full w-full">
           {/* Conversations List */}
-          <div className="w-full flex flex-col h-full overflow-hidden" style={{ borderLeft: '1px solid rgb(var(--border-primary))' }}>
+          <div className="w-full md:w-1/3 lg:w-1/4 flex flex-col h-full overflow-hidden flex-shrink-0" style={{ [isArabic ? 'borderLeft' : 'borderRight']: '1px solid rgb(var(--border-primary))' }}>
             {/* Header */}
             <div className="p-4" style={{ borderBottom: '1px solid rgb(var(--border-primary))' }}>
               <div className="flex items-center justify-between mb-3">
@@ -652,7 +747,12 @@ const Messages = () => {
                 filteredConversations.map((conversation) => (
                   <button
                     key={conversation.id}
-                    onClick={() => setSelectedConversation(conversation)}
+                    onClick={() => {
+                      console.log('👆 Clicked conversation:', conversation.id, conversation.participantName);
+                      console.log('📍 Current selected:', selectedConversation?.id, selectedConversation?.participantName);
+                      setSelectedConversation(conversation);
+                      console.log('✅ Set selected conversation to:', conversation.id);
+                    }}
                     className={`w-full p-4 flex items-start gap-3 transition-colors ${isArabic ? 'text-right' : 'text-left'}`}
                     style={{
                       borderBottom: '1px solid rgb(var(--border-primary))',
@@ -710,17 +810,23 @@ const Messages = () => {
                     />
                     <div>
                       <h3 className="font-bold" style={{ color: 'rgb(var(--text-primary))' }}>{selectedConversation.participantName || 'User'}</h3>
-                      {isTyping ? (
-                        <p className="text-sm italic" style={{ color: 'rgb(var(--text-secondary))' }}>{t('typing')}</p>
-                      ) : (
+                      {isTyping && (
                         <div className="flex items-center gap-1 text-xs">
-                          <FaCircle className="text-xs" />
-                          <span>
-                            {connectionState === 'Connected' ? 'متصل' :
-                              connectionState === 'Connecting' ? 'جاري الاتصال...' :
-                                connectionState === 'Reconnecting' ? 'إعادة الاتصال...' :
-                                  'غير متصل'}
-                          </span>
+                          <span className="text-primary-500 font-medium italic animate-pulse">{t('typing')}</span>
+                        </div>
+                      )}
+
+                      {!isTyping && Array.from(onlineUsers).some(id => String(id).toLowerCase() === String(selectedConversation.participantId).toLowerCase()) && (
+                        <div className="flex items-center gap-1 text-xs text-green-500">
+                          <FaCircle className="text-[10px]" />
+                          <span className="font-medium">{isArabic ? 'متصل الآن' : 'Online'}</span>
+                        </div>
+                      )}
+
+                      {!isTyping && !Array.from(onlineUsers).some(id => String(id).toLowerCase() === String(selectedConversation.participantId).toLowerCase()) && (
+                        <div className="flex items-center gap-1 text-xs text-gray-400">
+                          <FaCircle className="text-[10px]" />
+                          <span>{isArabic ? 'غير متصل' : 'Offline'}</span>
                         </div>
                       )}
                     </div>
@@ -750,13 +856,14 @@ const Messages = () => {
                           className={`flex ${message.senderId === user?.id ? 'justify-end' : 'justify-start'}`}
                         >
                           <div
-                            className="rounded-2xl p-4 shadow-sm transition-colors"
+                            className={`rounded-2xl p-4 shadow-sm transition-colors text-sm md:text-base leading-relaxed ${message.senderId === user?.id
+                              ? 'bg-primary-500 text-white'
+                              : 'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-100'
+                              }`}
                             style={{
-                              maxWidth: '500px',
-                              backgroundColor: message.senderId === user?.id ? 'rgb(var(--primary-500))' : 'rgb(var(--bg-secondary))',
-                              color: message.senderId === user?.id ? 'white' : 'rgb(var(--text-primary))',
-                              borderBottomRightRadius: message.senderId === user?.id ? '0.125rem' : '1rem',
-                              borderBottomLeftRadius: message.senderId !== user?.id ? '0.125rem' : '1rem'
+                              maxWidth: '75%',
+                              borderBottomRightRadius: (message.senderId === user?.id && !isArabic) || (message.senderId !== user?.id && isArabic) ? '0.25rem' : '1rem',
+                              borderBottomLeftRadius: (message.senderId !== user?.id && !isArabic) || (message.senderId === user?.id && isArabic) ? '0.25rem' : '1rem'
                             }}
                           >
                             {message.content && (
@@ -854,7 +961,10 @@ const Messages = () => {
                     <input
                       type="text"
                       value={newMessage}
-                      onChange={(e) => setNewMessage(e.target.value)}
+                      onChange={(e) => {
+                        setNewMessage(e.target.value);
+                        handleTyping();
+                      }}
                       onKeyDown={(e) => {
                         if (e.key === 'Enter' || e.code === 'Enter' || e.keyCode === 13) {
                           e.preventDefault();

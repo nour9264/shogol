@@ -17,10 +17,7 @@ const Footer = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
           <div>
             <div className="flex items-center gap-3 mb-4">
-              <div className="w-12 h-12 bg-gradient-primary rounded-full flex items-center justify-center">
-                <span className="text-white text-2xl font-bold">{isArabic ? 'ش' : 'S'}</span>
-              </div>
-              <span className="text-2xl font-bold">{isArabic ? 'شغل' : 'SHOGOL'}</span>
+              <img src="/images/logo.png" alt="Shogol Logo" className="h-14 w-auto object-contain rounded-lg" />
             </div>
             <p className="text-gray-300 text-sm leading-relaxed mb-4">
               {t('footerDesc')}

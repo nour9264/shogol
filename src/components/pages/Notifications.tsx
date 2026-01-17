@@ -1,7 +1,8 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { notificationService, Notification } from '@/services/api';
+import { useState } from 'react';
+import { useNotifications } from '@/hooks/useNotifications';
+import { Notification } from '@/services/api';
 import { useToast } from '@/context/ToastContext';
 import { useLanguage } from '@/context/LanguageContext';
 import { useRouter } from 'next/navigation';
@@ -9,36 +10,17 @@ import ProtectedRoute from '@/components/Common/ProtectedRoute';
 import Loading from '@/components/Common/Loading';
 import { formatRelativeTime } from '@/utils/helpers';
 import { FaBell, FaCheck, FaCheckDouble, FaBriefcase, FaEnvelope, FaUser, FaStar } from 'react-icons/fa';
-import styles from './Notifications.module.css';
 
 const Notifications = () => {
   const router = useRouter();
   const { t, language } = useLanguage();
   const { success, error: showError } = useToast();
-  const [notifications, setNotifications] = useState<Notification[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { notifications, loading, markAsRead, markAllAsRead: markAllAsReadHook } = useNotifications();
   const [markingAllRead, setMarkingAllRead] = useState(false);
-
-  useEffect(() => {
-    loadNotifications();
-  }, []);
-
-  const loadNotifications = async () => {
-    try {
-      const response = await notificationService.getNotifications(1, 50);
-      setNotifications(response.data.notifications || []);
-    } catch (error) {
-      console.error('Failed to load notifications:', error);
-    }
-    setLoading(false);
-  };
 
   const handleMarkAsRead = async (notificationId: number) => {
     try {
-      await notificationService.markAsRead(notificationId);
-      setNotifications(prev =>
-        prev.map(n => n.id === notificationId ? { ...n, isRead: true } : n)
-      );
+      await markAsRead(notificationId);
     } catch (error) {
       console.error('Failed to mark as read:', error);
     }
@@ -47,7 +29,7 @@ const Notifications = () => {
   const handleMarkAllAsRead = async () => {
     setMarkingAllRead(true);
     try {
-      setNotifications(prev => prev.map(n => ({ ...n, isRead: true })));
+      await markAllAsReadHook();
       success(t('allNotificationsMarkedAsRead'));
     } catch (error) {
       showError('Failed to mark notifications as read');

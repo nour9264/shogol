@@ -157,15 +157,13 @@ const Modal = ({ message, type = 'info', onClose, duration = 7000 }: ModalProps)
   return (
     <>
       <div
-        className={`fixed inset-0 bg-black/50 backdrop-blur-sm z-[10000] transition-opacity duration-300 ${
-          isVisible ? 'opacity-100' : 'opacity-0'
-        }`}
+        className={`fixed inset-0 bg-black/50 backdrop-blur-sm z-[10000] transition-opacity duration-300 ${isVisible ? 'opacity-100' : 'opacity-0'
+          }`}
         onClick={type !== 'error' ? handleClose : undefined}
       />
       <div
-        className={`fixed top-8 left-1/2 -translate-x-1/2 z-[10001] w-full max-w-lg mx-4 transition-all duration-300 ${
-          isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-10 pointer-events-none'
-        }`}
+        className={`fixed top-8 left-1/2 -translate-x-1/2 z-[10001] w-full max-w-lg mx-4 transition-all duration-300 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-10 pointer-events-none'
+          }`}
         role="alert"
         aria-live={type === 'error' ? 'assertive' : 'polite'}
       >

@@ -30,21 +30,21 @@ export default function ForgotPasswordPage() {
 
     try {
       await authService.forgotPassword(data.email);
-      success(isArabic 
-        ? 'تم إرسال رابط إعادة تعيين كلمة المرور إلى بريدك الإلكتروني' 
+      success(isArabic
+        ? 'تم إرسال رابط إعادة تعيين كلمة المرور إلى بريدك الإلكتروني'
         : 'Password reset link has been sent to your email'
       );
-      
+
       // Store email for reset password page
       if (typeof window !== 'undefined') {
         sessionStorage.setItem('resetEmail', data.email);
       }
-      
+
       // Navigate to reset password page
       router.push('/reset-password');
     } catch (error: any) {
       console.error('Forgot password error:', error);
-      const errorMessage = error.response?.data?.message || error.response?.data || 
+      const errorMessage = error.response?.data?.message || error.response?.data ||
         (isArabic ? 'حدث خطأ. يرجى المحاولة مرة أخرى' : 'An error occurred. Please try again');
       showError(errorMessage);
     } finally {
@@ -53,7 +53,7 @@ export default function ForgotPasswordPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8 transition-colors">
+    <div className="min-h-screen flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8 transition-colors" style={{ backgroundColor: 'rgb(var(--bg-primary))' }}>
       <div className="max-w-md w-full">
         <div className="text-center mb-8">
           <Link href="/" className="inline-flex items-center gap-3 mb-4">
@@ -61,19 +61,19 @@ export default function ForgotPasswordPage() {
               <span className="text-white text-3xl font-bold">{isArabic ? 'ش' : 'S'}</span>
             </div>
           </Link>
-          <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
+          <h2 className="text-3xl font-bold mb-2" style={{ color: 'rgb(var(--text-primary))' }}>
             {isArabic ? 'نسيت كلمة المرور؟' : 'Forgot Password?'}
           </h2>
-          <p className="text-gray-600 dark:text-gray-400">
-            {isArabic 
-              ? 'أدخل بريدك الإلكتروني وسنرسل لك رابط لإعادة تعيين كلمة المرور' 
+          <p style={{ color: 'rgb(var(--text-secondary))' }}>
+            {isArabic
+              ? 'أدخل بريدك الإلكتروني وسنرسل لك رابط لإعادة تعيين كلمة المرور'
               : 'Enter your email and we\'ll send you a link to reset your password'}
           </p>
         </div>
 
-        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-soft p-8 transition-colors">
-          <form 
-            onSubmit={handleSubmit(onSubmit)} 
+        <div className="card rounded-2xl shadow-soft p-8 transition-colors">
+          <form
+            onSubmit={handleSubmit(onSubmit)}
             onKeyDown={(e) => {
               if (e.key === 'Enter' || e.code === 'Enter' || e.keyCode === 13) {
                 const tagName = (e.target as HTMLElement).tagName.toLowerCase();
@@ -92,7 +92,7 @@ export default function ForgotPasswordPage() {
                 {isArabic ? 'البريد الإلكتروني' : 'Email'} <span className="text-red-500">*</span>
               </label>
               <div className="relative">
-                <FaEnvelope className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 rtl:right-4 ltr:left-4" />
+                <FaEnvelope className="absolute right-4 top-1/2 -translate-y-1/2 rtl:right-4 ltr:left-4" style={{ color: 'rgb(var(--text-tertiary))' }} />
                 <input
                   type="email"
                   {...register('email', {
@@ -110,15 +110,15 @@ export default function ForgotPasswordPage() {
             </div>
 
             <button type="submit" disabled={loading} className="btn btn-primary w-full">
-              {loading 
-                ? (isArabic ? 'جاري الإرسال...' : 'Sending...') 
+              {loading
+                ? (isArabic ? 'جاري الإرسال...' : 'Sending...')
                 : (isArabic ? 'إرسال رابط إعادة التعيين' : 'Send Reset Link')}
             </button>
           </form>
 
           <div className="mt-6 text-center">
-            <Link 
-              href="/login" 
+            <Link
+              href="/login"
               className="link text-sm inline-flex items-center gap-2"
             >
               {isArabic ? (

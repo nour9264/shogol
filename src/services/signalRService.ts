@@ -32,10 +32,17 @@ export interface ReadReceipt {
 // Connection state type
 export type ConnectionState = 'Connected' | 'Connecting' | 'Reconnecting' | 'Disconnected';
 
+// User status update
+export interface UserStatusUpdate {
+  userId: string;
+  isOnline: boolean;
+}
+
 // Message callback type
 type MessageCallback = (message: SignalRMessage) => void;
 type TypingCallback = (typing: TypingIndicator) => void;
 type ReadReceiptCallback = (receipt: ReadReceipt) => void;
+type UserStatusCallback = (status: UserStatusUpdate) => void;
 
 class SignalRService {
   private connection: signalR.HubConnection | null = null;
@@ -43,6 +50,7 @@ class SignalRService {
   private connectionStateListeners: Map<string, (state: ConnectionState) => void> = new Map();
   private typingListeners: Map<string, TypingCallback> = new Map();
   private readReceiptListeners: Map<string, ReadReceiptCallback> = new Map();
+  private userStatusListeners: Map<string, UserStatusCallback> = new Map();
 
   /**
    * Initialize and connect to SignalR hub
@@ -84,8 +92,8 @@ class SignalRService {
       this.notifyConnectionStateChange('Connected');
     } catch (error: any) {
       // Log error but don't spam console if backend is down
-      const isNetworkError = error?.message?.includes('Failed to fetch') || 
-                            error?.message?.includes('negotiation');
+      const isNetworkError = error?.message?.includes('Failed to fetch') ||
+        error?.message?.includes('negotiation');
       if (!isNetworkError) {
         console.error('❌ SignalR Connection Failed:', error);
       }
@@ -102,22 +110,73 @@ class SignalRService {
     if (!this.connection) return;
 
     // Handle incoming messages
-    this.connection.on('ReceiveMessage', (message: SignalRMessage) => {
-      console.log('📩 SignalR: New message received:', message);
-      // Notify listeners immediately
+    this.connection.on('ReceiveMessage', (data: any) => {
+      console.log('📩 SignalR: New message received:', data);
+      // Map to standardized format
+      const message: SignalRMessage = {
+        messageId: data.messageId || data.MessageId,
+        conversationId: data.conversationId || data.ConversationId,
+        senderId: data.senderId || data.SenderId,
+        senderName: data.senderName || data.SenderName,
+        content: data.content || data.Content,
+        fileUrl: data.fileUrl || data.FileUrl,
+        fileName: data.fileName || data.FileName,
+        sentAt: data.sentAt || data.SentAt,
+        isRead: data.isRead || data.IsRead,
+      };
       this.notifyMessageListeners(message);
     });
 
     // Handle typing indicators
-    this.connection.on('UserTyping', (typing: TypingIndicator) => {
-      console.log('⌨️ SignalR: Typing indicator:', typing);
+    this.connection.on('UserTyping', (data: any) => {
+      console.log('⌨️ SignalR: Typing indicator:', data);
+      const typing: TypingIndicator = {
+        conversationId: data.conversationId || data.ConversationId,
+        userId: data.userId || data.UserId,
+        userName: data.userName || data.UserName,
+        isTyping: data.isTyping !== undefined ? data.isTyping : data.IsTyping,
+      };
       this.notifyTypingListeners(typing);
     });
 
     // Handle read receipts
-    this.connection.on('MessageRead', (receipt: ReadReceipt) => {
-      console.log('✓ SignalR: Read receipt:', receipt);
+    this.connection.on('MessageRead', (data: any) => {
+      console.log('✓ SignalR: Read receipt:', data);
+      const receipt: ReadReceipt = {
+        messageId: data.messageId || data.MessageId,
+        conversationId: data.conversationId || data.ConversationId,
+        readAt: data.readAt || data.ReadAt,
+      };
       this.notifyReadReceiptListeners(receipt);
+    });
+
+    // Handle User Online/Offline Status (Backend events: UserOnline/UserOffline)
+    this.connection.on('UserOnline', (data: any) => {
+      console.log('🟢 SignalR: User Online (Raw):', data);
+      let userId = '';
+      if (typeof data === 'object' && data !== null) {
+        userId = data.userId || data.UserId || data.id || data.Id;
+      } else {
+        userId = String(data);
+      }
+
+      if (userId) {
+        this.notifyUserStatusListeners({ userId, isOnline: true });
+      }
+    });
+
+    this.connection.on('UserOffline', (data: any) => {
+      console.log('🔴 SignalR: User Offline (Raw):', data);
+      let userId = '';
+      if (typeof data === 'object' && data !== null) {
+        userId = data.userId || data.UserId || data.id || data.Id;
+      } else {
+        userId = String(data);
+      }
+
+      if (userId) {
+        this.notifyUserStatusListeners({ userId, isOnline: false });
+      }
     });
 
     // Handle reconnecting
@@ -136,7 +195,7 @@ class SignalRService {
     this.connection.onclose((error) => {
       console.error('❌ SignalR: Connection closed:', error);
       this.notifyConnectionStateChange('Disconnected');
-      
+
       // Attempt to reconnect if connection was lost unexpectedly
       // (automatic reconnect should handle this, but this is a fallback)
       if (error) {
@@ -325,6 +384,55 @@ class SignalRService {
       this.notifyConnectionStateChange('Disconnected');
     }
   }
+
+  /**
+   * Notify all user status listeners
+   */
+  private notifyUserStatusListeners(status: UserStatusUpdate): void {
+    this.userStatusListeners.forEach((callback) => {
+      try {
+        callback(status);
+      } catch (error) {
+        console.error('SignalR: Error in user status listener:', error);
+      }
+    });
+  }
+
+  /**
+   * Subscribe to user status changes
+   * @param callback Function to call when user status changes
+   * @returns Unsubscribe function
+   */
+  onUserStatusChange(callback: UserStatusCallback): () => void {
+    const id = Math.random().toString(36).substr(2, 9);
+    this.userStatusListeners.set(id, callback);
+
+    return () => {
+      this.userStatusListeners.delete(id);
+    };
+  }
+
+  /**
+   * Check if a user is online via SignalR hub method
+   * @param userId User ID to check
+   * @returns Promise<boolean> indicating if user is online
+   */
+  async checkUserOnlineStatus(userId: string): Promise<boolean> {
+    if (!this.isConnected()) {
+      console.warn('SignalR: Cannot check user status - not connected');
+      return false;
+    }
+
+    try {
+      const isOnline = await this.connection?.invoke('CheckUserOnlineStatus', userId);
+      return isOnline || false;
+    } catch (error) {
+      console.error('SignalR: Failed to check user online status:', error);
+      return false;
+    }
+  }
+
+  // Method 'IsUserOnline' does not exist on backend, relying on events instead.
 }
 
 // Export singleton instance
