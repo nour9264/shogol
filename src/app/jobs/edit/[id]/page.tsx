@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { useAuth } from '@/context/AuthContext';
@@ -39,13 +39,7 @@ export default function EditJobPage() {
     formState: { errors },
   } = useForm<EditJobFormData>();
 
-  useEffect(() => {
-    if (id) {
-      fetchJobDetails();
-    }
-  }, [id]);
-
-  const fetchJobDetails = async () => {
+  const fetchJobDetails = useCallback(async () => {
     try {
       const response = await jobService.getJobDetails(parseInt(id));
       const jobData = response.data;
@@ -70,7 +64,7 @@ export default function EditJobPage() {
         return;
       }
 
-      // Pre-fill form with job data
+      // Reset form with job data
       reset({
         title: jobData.title,
         description: jobData.description,
@@ -83,7 +77,13 @@ export default function EditJobPage() {
       router.push('/my-jobs');
     }
     setLoading(false);
-  };
+  }, [id, user, isArabic, showError, router, reset]);
+
+  useEffect(() => {
+    if (id) {
+      fetchJobDetails();
+    }
+  }, [id, fetchJobDetails]);
 
   const onSubmit = async (data: EditJobFormData) => {
     setSaving(true);

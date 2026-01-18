@@ -93,7 +93,6 @@ const translations = {
     cropImage: 'قص الصورة',
     cropProfilePicture: 'قص الصورة الشخصية',
     confirm: 'تأكيد',
-    cancel: 'إلغاء',
     rotate: 'تدوير 90°',
     processing: 'جاري المعالجة...',
 
@@ -333,7 +332,6 @@ const translations = {
     cropImage: 'Crop Image',
     cropProfilePicture: 'Crop Profile Picture',
     confirm: 'Confirm',
-    cancel: 'Cancel',
     rotate: 'Rotate 90°',
     processing: 'Processing...',
 
