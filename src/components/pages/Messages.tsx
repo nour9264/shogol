@@ -870,21 +870,39 @@ const Messages = () => {
                               <p className="whitespace-pre-wrap break-words">{message.content}</p>
                             )}
                             {message.fileUrl && (
-                              <a
-                                href={message.fileUrl}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className={`flex items-center gap-2 mt-2 text-sm ${message.senderId === user?.id ? 'text-white opacity-90 hover:opacity-100' : 'text-primary-600 hover:text-primary-700'
-                                  }`}
-                              >
-                                <FaPaperclip />
-                                <span>{message.fileName || t('attachment')}</span>
-                              </a>
+                              /\.(jpg|jpeg|png|gif|webp|svg|bmp)(\?.*)?\s*$/i.test(message.fileName || message.fileUrl || '') ? (
+                                <div className="mt-2">
+                                  <a
+                                    href={getImageUrl(message.fileUrl)}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="block"
+                                  >
+                                    <img
+                                      src={getImageUrl(message.fileUrl)}
+                                      alt={message.fileName || 'Attachment'}
+                                      className="max-w-full rounded-lg max-h-64 object-contain shadow-sm border border-black/10 dark:border-white/10"
+                                      loading="lazy"
+                                    />
+                                  </a>
+                                </div>
+                              ) : (
+                                <a
+                                  href={getImageUrl(message.fileUrl)}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className={`flex items-center gap-2 mt-2 text-sm ${message.senderId === user?.id ? 'text-white opacity-90 hover:opacity-100' : 'text-primary-600 hover:text-primary-700'
+                                    }`}
+                                >
+                                  <FaPaperclip />
+                                  <span>{message.fileName || t('attachment')}</span>
+                                </a>
+                              )
                             )}
                             <div className="flex items-center justify-end gap-2 mt-2">
-                              <span className={`text-xs ${message.senderId === user?.id ? 'text-white opacity-70' : 'text-gray-500'
+                              <span className={`text-xs font-bold ${message.senderId === user?.id ? 'text-white/95' : 'text-gray-700 dark:text-gray-300'
                                 }`}>
-                                {new Date(message.sentAt).toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' })}
+                                {new Date(message.sentAt).toLocaleTimeString(isArabic ? 'ar-EG' : 'en-US', { hour: '2-digit', minute: '2-digit' })}
                               </span>
                               {message.senderId === user?.id && (
                                 <div className="flex items-center ml-2" title={message.isRead ? t('read') : t('sent')}>

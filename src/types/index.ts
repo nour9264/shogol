@@ -11,6 +11,7 @@ export interface User {
   bio: string | null;
   isFreelancer: boolean;
   isClient: boolean;
+  userType?: 'Freelancer' | 'Client'; // Added for onboarding flow
   accountType: 'Individual' | 'Company';
   companyName: string | null;
   status: string;

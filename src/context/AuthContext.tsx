@@ -42,7 +42,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
-    
+
     const storedToken = localStorage.getItem('token');
     const storedUser = localStorage.getItem('user');
 
@@ -68,22 +68,22 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   const login = async (emailOrPhone: string, password: string) => {
     const timestamp = new Date().toLocaleTimeString();
     console.log(`%c[🔐 AUTH CONTEXT] ${timestamp} - Starting Login`, 'color: #2196F3; font-weight: bold;');
-    
+
     try {
       const response = await authService.login({ emailOrPhone, password });
       const { token: responseToken, user: responseUser } = response.data;
-      
+
       setToken(responseToken || null);
       setUser(responseUser || null);
       if (typeof window !== 'undefined' && responseToken && responseUser) {
         localStorage.setItem('token', responseToken);
         localStorage.setItem('user', JSON.stringify(responseUser));
       }
-      
+
       return { success: true, data: response.data };
     } catch (error: any) {
       let errorMessage = 'حدث خطأ أثناء تسجيل الدخول';
-      
+
       if (error.response?.data) {
         if (error.response.data.errors) {
           const errors = Object.values(error.response.data.errors).flat() as string[];
@@ -98,7 +98,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       } else {
         errorMessage = error.message || errorMessage;
       }
-      
+
       return { success: false, error: errorMessage };
     }
   };
@@ -106,17 +106,22 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   const register = async (userData: RegisterData, profilePicture?: File) => {
     const timestamp = new Date().toLocaleTimeString();
     console.log(`%c[🔐 AUTH CONTEXT] ${timestamp} - Starting Registration`, 'color: #2196F3; font-weight: bold;');
-    
+    console.log('%c[📋 Registration Data]', 'color: #4CAF50; font-weight: bold;', userData);
+    console.log('%c[🖼️ Profile Picture]', 'color: #4CAF50; font-weight: bold;', profilePicture ? `${profilePicture.name} (${profilePicture.size} bytes)` : 'None');
+
     try {
       const response = await authService.register(userData, profilePicture);
-      
+
       // Registration successful - user needs to verify OTP
       // Don't set token/user yet as they need to verify first
       return { success: true, data: response.data };
     } catch (error: any) {
+      console.error('%c[❌ Registration Error]', 'color: #F44336; font-weight: bold;', error);
       let errorMessage = 'حدث خطأ أثناء التسجيل';
-      
+
       if (error.response?.data) {
+        console.error('%c[📦 Error Response Data]', 'color: #F44336; font-weight: bold;', error.response.data);
+
         if (error.response.data.errors) {
           const errors = Object.values(error.response.data.errors).flat() as string[];
           errorMessage = errors.join(', ') || errorMessage;
@@ -128,13 +133,17 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
           }
         } else if (typeof error.response.data === 'string') {
           errorMessage = error.response.data;
+        } else if (error.response.data.title) {
+          // Sometimes .NET returns validation errors in 'title' field
+          errorMessage = error.response.data.title;
         }
       } else if (error.request) {
         errorMessage = 'لا يمكن الاتصال بالخادم. تأكد من تشغيل Backend API';
       } else {
         errorMessage = error.message || errorMessage;
       }
-      
+
+      console.error('%c[💬 Final Error Message]', 'color: #F44336; font-weight: bold;', errorMessage);
       return { success: false, error: errorMessage };
     }
   };
@@ -142,11 +151,11 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   const verifyOtp = async (phoneNumber: string, otpCode: string) => {
     const timestamp = new Date().toLocaleTimeString();
     console.log(`%c[🔐 AUTH CONTEXT] ${timestamp} - Verifying OTP`, 'color: #2196F3; font-weight: bold;');
-    
+
     try {
       const response = await authService.verifyOtp({ phoneNumber, otpCode });
       const { token: responseToken, user: responseUser } = response.data;
-      
+
       if (responseToken && responseUser) {
         setToken(responseToken);
         setUser(responseUser);
@@ -155,15 +164,15 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
           localStorage.setItem('user', JSON.stringify(responseUser));
         }
       }
-      
+
       return { success: true, data: response.data };
     } catch (error: any) {
       let errorMessage = 'رمز التحقق غير صحيح';
-      
+
       if (error.response?.data?.message) {
         errorMessage = error.response.data.message;
       }
-      
+
       return { success: false, error: errorMessage };
     }
   };
@@ -174,11 +183,11 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       return { success: true };
     } catch (error: any) {
       let errorMessage = 'فشل إعادة إرسال رمز التحقق';
-      
+
       if (error.response?.data?.message) {
         errorMessage = error.response.data.message;
       }
-      
+
       return { success: false, error: errorMessage };
     }
   };
@@ -201,7 +210,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
 
   const refreshProfile = async () => {
     if (!token) return;
-    
+
     try {
       const response = await userService.getProfile();
       if (response.data) {

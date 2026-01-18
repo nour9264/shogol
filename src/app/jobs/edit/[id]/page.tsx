@@ -10,6 +10,7 @@ import { jobService } from '@/services/api';
 import Loading from '@/components/Common/Loading';
 import { FaSave, FaArrowRight, FaArrowLeft } from 'react-icons/fa';
 import Link from 'next/link';
+import type { JobRequest } from '@/types';
 
 interface EditJobFormData {
   title: string;
@@ -29,7 +30,7 @@ export default function EditJobPage() {
 
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [job, setJob] = useState<any>(null);
+  const [job, setJob] = useState<JobRequest | null>(null);
 
   const {
     register,

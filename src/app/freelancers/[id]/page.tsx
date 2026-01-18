@@ -1,7 +1,7 @@
-import FreelancerProfile from '@/components/pages/freelancers/FreelancerProfile';
+import PublicProfile from '@/components/pages/freelancers/PublicProfile';
 
 export default function FreelancerProfilePage() {
-  return <FreelancerProfile />;
+  return <PublicProfile />;
 }
 
 

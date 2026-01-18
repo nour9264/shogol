@@ -1,0 +1,390 @@
+.container {
+    min-height: 100vh;
+    background: linear-gradient(135deg,
+            rgb(var(--bg-primary)) 0%,
+            rgb(var(--bg-secondary)) 100%);
+    padding: 2rem 1rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.content {
+    max-width: 800px;
+    width: 100%;
+    margin: 0 auto;
+}
+
+.header {
+    text-align: center;
+    margin-bottom: 3rem;
+}
+
+.logo {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 2rem;
+    text-decoration: none;
+}
+
+.logoIcon {
+    width: 4rem;
+    height: 4rem;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 10px 30px rgba(102, 126, 234, 0.3);
+    transition: transform 0.3s ease;
+}
+
+.logo:hover .logoIcon {
+    transform: scale(1.05);
+}
+
+.logoIcon span {
+    color: white;
+    font-size: 2rem;
+    font-weight: bold;
+}
+
+.progressBar {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 1rem;
+    margin-bottom: 2rem;
+    direction: rtl;
+}
+
+.progressStep {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.stepCircle {
+    width: 3rem;
+    height: 3rem;
+    border-radius: 50%;
+    background: rgb(var(--bg-secondary));
+    border: 2px solid rgb(var(--border-secondary));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    color: rgb(var(--text-secondary));
+    transition: all 0.3s ease;
+}
+
+.stepCircle.active {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-color: #667eea;
+    color: white;
+    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+}
+
+.stepLabel {
+    font-size: 0.875rem;
+    color: rgb(var(--text-secondary));
+    font-weight: 500;
+}
+
+.progressLine {
+    width: 4rem;
+    height: 2px;
+    background: rgb(var(--border-secondary));
+    margin-top: -1.5rem;
+}
+
+.title {
+    font-size: 2.5rem;
+    font-weight: bold;
+    color: rgb(var(--text-primary));
+    margin-bottom: 0.5rem;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.subtitle {
+    font-size: 1.125rem;
+    color: rgb(var(--text-secondary));
+    max-width: 600px;
+    margin: 0 auto;
+}
+
+.skillsCard {
+    background: rgb(var(--bg-secondary));
+    border-radius: 1.5rem;
+    padding: 2rem;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+    border: 1px solid rgb(var(--border-secondary));
+    margin-bottom: 2rem;
+    max-height: 500px;
+    display: flex;
+    flex-direction: column;
+}
+
+.selectedCount {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1rem;
+    background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);
+    border-radius: 1rem;
+    margin-bottom: 1.5rem;
+    font-weight: 600;
+    color: rgb(var(--text-primary));
+}
+
+.count {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 0.25rem 0.75rem;
+    border-radius: 2rem;
+    font-size: 0.875rem;
+    min-width: 2rem;
+    text-align: center;
+}
+
+.skillsList {
+    overflow-y: auto;
+    flex: 1;
+    padding-right: 0.5rem;
+}
+
+.skillsList::-webkit-scrollbar {
+    width: 6px;
+}
+
+.skillsList::-webkit-scrollbar-track {
+    background: rgb(var(--bg-primary));
+    border-radius: 10px;
+}
+
+.skillsList::-webkit-scrollbar-thumb {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-radius: 10px;
+}
+
+.skillItem {
+    margin-bottom: 0.5rem;
+}
+
+.skillRow {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.75rem;
+    border-radius: 0.75rem;
+    transition: all 0.2s ease;
+}
+
+.skillRow:hover {
+    background: rgba(102, 126, 234, 0.05);
+}
+
+.expandButton {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 0.25rem;
+    color: rgb(var(--text-secondary));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: color 0.2s ease;
+}
+
+.expandButton:hover {
+    color: #667eea;
+}
+
+.expandIcon {
+    transition: transform 0.3s ease;
+}
+
+.expandIcon.expanded {
+    transform: rotate(180deg);
+}
+
+.skillLabel {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    cursor: pointer;
+    flex: 1;
+    user-select: none;
+}
+
+.checkbox {
+    position: absolute;
+    opacity: 0;
+    cursor: pointer;
+}
+
+.checkmark {
+    width: 1.5rem;
+    height: 1.5rem;
+    border: 2px solid rgb(var(--border-secondary));
+    border-radius: 0.375rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+    background: rgb(var(--bg-primary));
+}
+
+.checkbox:checked+.checkmark {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-color: #667eea;
+}
+
+.checkmark svg {
+    opacity: 0;
+    transform: scale(0);
+    transition: all 0.2s ease;
+}
+
+.checkbox:checked+.checkmark svg {
+    opacity: 1;
+    transform: scale(1);
+}
+
+.skillName {
+    font-weight: 600;
+    color: rgb(var(--text-primary));
+    flex: 1;
+}
+
+.skillNameEn {
+    font-size: 0.875rem;
+    color: rgb(var(--text-secondary));
+    font-style: italic;
+}
+
+.childSkills {
+    margin-top: 0.5rem;
+    padding-right: 1rem;
+    border-right: 2px solid rgba(102, 126, 234, 0.2);
+}
+
+.actions {
+    text-align: center;
+}
+
+.submitButton {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border: none;
+    padding: 1rem 3rem;
+    border-radius: 3rem;
+    font-size: 1.125rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 10px 30px rgba(102, 126, 234, 0.3);
+    display: inline-flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 1rem;
+}
+
+.submitButton:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 15px 40px rgba(102, 126, 234, 0.4);
+}
+
+.submitButton:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.buttonSpinner {
+    width: 1.25rem;
+    height: 1.25rem;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    border-top-color: white;
+    border-radius: 50%;
+    animation: spin 0.6s linear infinite;
+}
+
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+.hint {
+    font-size: 0.875rem;
+    color: rgb(var(--text-secondary));
+}
+
+.loadingState {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 1rem;
+    min-height: 60vh;
+    color: rgb(var(--text-secondary));
+}
+
+.spinner {
+    width: 3rem;
+    height: 3rem;
+    border: 3px solid rgba(102, 126, 234, 0.2);
+    border-top-color: #667eea;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+}
+
+.emptyState {
+    text-align: center;
+    color: rgb(var(--text-secondary));
+    padding: 3rem;
+    font-size: 1.125rem;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .container {
+        padding: 1rem;
+    }
+
+    .title {
+        font-size: 2rem;
+    }
+
+    .subtitle {
+        font-size: 1rem;
+    }
+
+    .skillsCard {
+        padding: 1.5rem;
+        max-height: 400px;
+    }
+
+    .submitButton {
+        width: 100%;
+        padding: 1rem 2rem;
+    }
+
+    .progressBar {
+        gap: 0.5rem;
+    }
+
+    .stepCircle {
+        width: 2.5rem;
+        height: 2.5rem;
+    }
+
+    .progressLine {
+        width: 2rem;
+    }
+}

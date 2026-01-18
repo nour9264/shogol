@@ -285,11 +285,47 @@ export const userService = {
 
   getAllSkills: () => api.get('/User/skills'),
 
+  // Get available skills for selection (categorized)
+  getAvailableSkills: () => api.get('/Skill'),
+
+  // Get user's current skills
+  getUserSkills: () => api.get('/Skill/user-skills'),
+
+  // Add multiple skills at once (for onboarding)
+  addMultipleSkills: (skillIds: number[]) =>
+    api.post<{ message: string }>('/Skill/add-multiple', { skillIds }),
+
   addSkill: (data: { skillId: number; proficiencyLevel: string }) =>
     api.post<{ message: string }>('/User/skills', data),
 
   removeSkill: (userSkillId: number) =>
-    api.delete<{ message: string }>(`/User/skills/${userSkillId}`),
+    api.delete<{ message: string }>(`/Skill/${userSkillId}`),
+
+  // Get user portfolios
+  getPortfolios: () => api.get('/User/portfolios'),
+
+  // Add new portfolio
+  addPortfolio: (data: FormData) =>
+    api.post('/User/portfolios', data, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    }),
+
+  // Delete portfolio
+  deletePortfolio: (portfolioId: number) =>
+    api.delete(`/User/portfolios/${portfolioId}`),
+
+  // Get freelancer public details
+  getFreelancerDetails: (freelancerId: string) =>
+    api.get(`/User/freelancer-account-details/${freelancerId}`),
+
+  // Get user bio
+  getBio: () => api.get<{ bio: string }>('/User/bio'),
+
+  // Update user bio
+  updateBio: (bio: string) =>
+    api.put<{ message: string }>('/User/bio', { bio }),
 
   addLanguage: (data: { languageName: string; proficiencyLevel: string }) =>
     api.post<{ message: string }>('/User/languages', data),
@@ -297,26 +333,7 @@ export const userService = {
   removeLanguage: (languageId: number) =>
     api.delete<{ message: string }>(`/User/languages/${languageId}`),
 
-  addPortfolio: (data: {
-    title: string;
-    description?: string;
-    projectUrl?: string;
-    image?: File;
-  }) => {
-    const formData = new FormData();
-    formData.append('title', data.title);
-    if (data.description) formData.append('description', data.description);
-    if (data.projectUrl) formData.append('projectUrl', data.projectUrl);
-    if (data.image) formData.append('image', data.image);
-    return api.post<{ message: string }>('/User/portfolios', formData, {
-      headers: {
-        'Content-Type': undefined as unknown as string,
-      },
-    });
-  },
 
-  removePortfolio: (portfolioId: number) =>
-    api.delete<{ message: string }>(`/User/portfolios/${portfolioId}`),
 
   addCertificate: (data: {
     title: string;
@@ -348,7 +365,19 @@ export const userService = {
     pageSize?: number;
   }) => api.post<{ freelancers: Freelancer[]; totalCount: number; pageNumber: number; pageSize: number; totalPages: number }>('/User/freelancers/search', filters),
 
-  getFreelancerDetails: (freelancerId: string) => api.get(`/User/freelancers/${freelancerId}`),
+
+  // Client Reviews
+  getFreelancerReviews: (freelancerId: string) => api.get(`/FreelancerReview/${freelancerId}`),
+  addReview: (data: { jobRequestId: number; rating: number; comment: string }) => api.post('/FreelancerReview/add', data),
+  updateReview: (data: { reviewId: number; rating: number; comment: string }) => api.put('/FreelancerReview/update', data),
+  deleteReview: (reviewId: number) => api.delete(`/FreelancerReview/${reviewId}`),
+};
+
+export const reviewService = {
+  getFreelancerReviews: userService.getFreelancerReviews,
+  addReview: userService.addReview,
+  updateReview: userService.updateReview,
+  deleteReview: userService.deleteReview,
 };
 
 // ==================== JOB REQUEST ENDPOINTS ====================

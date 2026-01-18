@@ -18,6 +18,7 @@ const VerifyOTP = () => {
   const [otp, setOtp] = useState<string[]>(['', '', '', '', '', '']);
   const [loading, setLoading] = useState(false);
   const [resending, setResending] = useState(false);
+  const [submitted, setSubmitted] = useState(false); // Prevent duplicate submissions
   const inputRefs = [
     useRef<HTMLInputElement>(null),
     useRef<HTMLInputElement>(null),
@@ -92,6 +93,13 @@ const VerifyOTP = () => {
       return;
     }
 
+    // Prevent duplicate submissions
+    if (submitted || loading) {
+      console.log('%c[⚠️ Duplicate submission prevented]', 'color: #FF9800; font-weight: bold;');
+      return;
+    }
+
+    setSubmitted(true);
     setLoading(true);
     const result = await verifyOtp(userPhone, otpCode);
     setLoading(false);
@@ -102,8 +110,26 @@ const VerifyOTP = () => {
         sessionStorage.removeItem('registerPhoneNumber');
         sessionStorage.removeItem('registerEmail');
       }
-      router.push('/');
+
+      // Debug logging
+      console.log('%c[🔍 OTP Verification Success]', 'color: #4CAF50; font-weight: bold;');
+      console.log('%c[👤 User Data]', 'color: #2196F3; font-weight: bold;', result.data?.user);
+
+      // Check if user is a freelancer and redirect to onboarding
+      // Check both userType and isFreelancer for compatibility
+      const isFreelancer = result.data?.user?.userType === 'Freelancer' || result.data?.user?.isFreelancer === true;
+
+      console.log('%c[🎯 Is Freelancer?]', 'color: #FF9800; font-weight: bold;', isFreelancer);
+
+      if (isFreelancer) {
+        console.log('%c[➡️ Redirecting to Skills Page]', 'color: #9C27B0; font-weight: bold;');
+        router.push('/onboarding/skills');
+      } else {
+        console.log('%c[➡️ Redirecting to Home]', 'color: #9C27B0; font-weight: bold;');
+        router.push('/');
+      }
     } else {
+      setSubmitted(false); // Reset on error so user can try again
       showError(result.error || 'رمز التحقق غير صحيح');
       setOtp(['', '', '', '', '', '']);
       inputRefs[0].current?.focus();

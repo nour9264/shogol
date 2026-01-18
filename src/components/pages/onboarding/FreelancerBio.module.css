@@ -1,0 +1,366 @@
+.container {
+    min-height: 100vh;
+    background: linear-gradient(135deg,
+            rgb(var(--bg-primary)) 0%,
+            rgb(var(--bg-secondary)) 100%);
+    padding: 2rem 1rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.content {
+    max-width: 800px;
+    width: 100%;
+    margin: 0 auto;
+}
+
+.header {
+    text-align: center;
+    margin-bottom: 3rem;
+}
+
+.logo {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 2rem;
+    text-decoration: none;
+}
+
+.logoIcon {
+    width: 4rem;
+    height: 4rem;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 10px 30px rgba(102, 126, 234, 0.3);
+    transition: transform 0.3s ease;
+}
+
+.logo:hover .logoIcon {
+    transform: scale(1.05);
+}
+
+.logoIcon span {
+    color: white;
+    font-size: 2rem;
+    font-weight: bold;
+}
+
+.progressBar {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 1rem;
+    margin-bottom: 2rem;
+    direction: rtl;
+}
+
+.progressStep {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.stepCircle {
+    width: 3rem;
+    height: 3rem;
+    border-radius: 50%;
+    background: rgb(var(--bg-secondary));
+    border: 2px solid rgb(var(--border-secondary));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    color: rgb(var(--text-secondary));
+    transition: all 0.3s ease;
+}
+
+.stepCircle.active {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-color: #667eea;
+    color: white;
+    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+}
+
+.stepCircle.completed {
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    border-color: #10b981;
+    color: white;
+    box-shadow: 0 4px 15px rgba(16, 185, 129, 0.4);
+}
+
+.stepLabel {
+    font-size: 0.875rem;
+    color: rgb(var(--text-secondary));
+    font-weight: 500;
+}
+
+.progressLine {
+    width: 4rem;
+    height: 2px;
+    background: rgb(var(--border-secondary));
+    margin-top: -1.5rem;
+    transition: background 0.3s ease;
+}
+
+.progressLine.completed {
+    background: linear-gradient(90deg, #10b981 0%, #059669 100%);
+}
+
+.title {
+    font-size: 2.5rem;
+    font-weight: bold;
+    color: rgb(var(--text-primary));
+    margin-bottom: 0.5rem;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.subtitle {
+    font-size: 1.125rem;
+    color: rgb(var(--text-secondary));
+    max-width: 600px;
+    margin: 0 auto;
+}
+
+.bioCard {
+    background: rgb(var(--bg-secondary));
+    border-radius: 1.5rem;
+    padding: 2rem;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+    border: 1px solid rgb(var(--border-secondary));
+    margin-bottom: 2rem;
+}
+
+.textareaWrapper {
+    position: relative;
+    margin-bottom: 2rem;
+}
+
+.textarea {
+    width: 100%;
+    min-height: 200px;
+    padding: 1.5rem;
+    border: 2px solid rgb(var(--border-secondary));
+    border-radius: 1rem;
+    background: rgb(var(--bg-primary));
+    color: rgb(var(--text-primary));
+    font-size: 1rem;
+    line-height: 1.6;
+    resize: vertical;
+    transition: all 0.3s ease;
+    font-family: inherit;
+}
+
+.textarea:focus {
+    outline: none;
+    border-color: #667eea;
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+.textarea::placeholder {
+    color: rgb(var(--text-secondary));
+    opacity: 0.6;
+}
+
+.charCount {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 0.5rem;
+    font-size: 0.875rem;
+    color: rgb(var(--text-secondary));
+}
+
+.charCount .warning {
+    color: #f59e0b;
+    font-weight: 600;
+}
+
+.progressBarContainer {
+    width: 100%;
+    height: 4px;
+    background: rgb(var(--border-secondary));
+    border-radius: 2px;
+    overflow: hidden;
+    margin-top: 0.5rem;
+}
+
+.progressBarFill {
+    height: 100%;
+    background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+    transition: width 0.3s ease;
+    border-radius: 2px;
+}
+
+.tips {
+    background: linear-gradient(135deg, rgba(102, 126, 234, 0.05) 0%, rgba(118, 75, 162, 0.05) 100%);
+    border-radius: 1rem;
+    padding: 1.5rem;
+    border: 1px solid rgba(102, 126, 234, 0.1);
+}
+
+.tipsTitle {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 1rem;
+    font-weight: 600;
+    color: #667eea;
+    margin-bottom: 1rem;
+}
+
+.tipsList {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.tipsList li {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+    color: rgb(var(--text-secondary));
+    font-size: 0.9375rem;
+    line-height: 1.5;
+}
+
+.tipsList li::before {
+    content: "✓";
+    color: #10b981;
+    font-weight: bold;
+    flex-shrink: 0;
+    margin-top: 0.125rem;
+}
+
+.actions {
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+.submitButton {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border: none;
+    padding: 1rem 3rem;
+    border-radius: 3rem;
+    font-size: 1.125rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 10px 30px rgba(102, 126, 234, 0.3);
+    display: inline-flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.submitButton:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 15px 40px rgba(102, 126, 234, 0.4);
+}
+
+.submitButton:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.backButton {
+    background: transparent;
+    color: rgb(var(--text-secondary));
+    border: 2px solid rgb(var(--border-secondary));
+    padding: 1rem 2rem;
+    border-radius: 3rem;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.backButton:hover:not(:disabled) {
+    border-color: #667eea;
+    color: #667eea;
+    transform: translateX(4px);
+}
+
+.backButton:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.buttonSpinner {
+    width: 1.25rem;
+    height: 1.25rem;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    border-top-color: white;
+    border-radius: 50%;
+    animation: spin 0.6s linear infinite;
+}
+
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .container {
+        padding: 1rem;
+    }
+
+    .title {
+        font-size: 2rem;
+    }
+
+    .subtitle {
+        font-size: 1rem;
+    }
+
+    .bioCard {
+        padding: 1.5rem;
+    }
+
+    .textarea {
+        min-height: 180px;
+        padding: 1rem;
+    }
+
+    .actions {
+        flex-direction: column-reverse;
+        width: 100%;
+    }
+
+    .submitButton,
+    .backButton {
+        width: 100%;
+        justify-content: center;
+    }
+
+    .progressBar {
+        gap: 0.5rem;
+    }
+
+    .stepCircle {
+        width: 2.5rem;
+        height: 2.5rem;
+    }
+
+    .progressLine {
+        width: 2rem;
+    }
+}

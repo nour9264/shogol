@@ -9,7 +9,6 @@ import { useAuth } from '@/context/AuthContext';
 import { jobService } from '@/services/api';
 import { formatCurrency } from '@/utils/helpers';
 import styles from './Home.module.css';
-import type { TranslationKey } from '@/context/LanguageContext';
 
 interface JobSuggestion {
   id: number;
@@ -107,31 +106,32 @@ const Home = () => {
     }
   };
 
+  // Mock services - ideally these would come from an API or be fully translated
   const services = [
     {
-      title: 'تطوير المواقع الإلكترونية',
-      description: 'تصميم وتطوير مواقع احترافية متجاوبة مع جميع الأجهزة',
+      title: isArabic ? 'تطوير المواقع الإلكترونية' : 'Web Development',
+      description: isArabic ? 'تصميم وتطوير مواقع احترافية متجاوبة مع جميع الأجهزة' : 'Design and development of professional responsive websites',
       image: '/brain/56fc3de5-a872-4795-b75b-2954057e2851/service_web_dev_1768351845166.png',
       priceRange: '500 - 5000',
       count: 234
     },
     {
-      title: 'تطوير تطبيقات الجوال',
-      description: 'تطبيقات iOS و Android احترافية بأحدث التقنيات',
+      title: isArabic ? 'تطوير تطبيقات الجوال' : 'Mobile App Development',
+      description: isArabic ? 'تطبيقات iOS و Android احترافية بأحدث التقنيات' : 'Professional iOS and Android apps with latest technologies',
       image: '/brain/56fc3de5-a872-4795-b75b-2954057e2851/service_mobile_app_1768351858018.png',
       priceRange: '1000 - 10000',
       count: 156
     },
     {
-      title: 'التصميم الجرافيكي',
-      description: 'تصاميم إبداعية للهوية البصرية والمواد التسويقية',
+      title: isArabic ? 'التصميم الجرافيكي' : 'Graphic Design',
+      description: isArabic ? 'تصاميم إبداعية للهوية البصرية والمواد التسويقية' : 'Creative designs for visual identity and marketing materials',
       image: '/brain/56fc3de5-a872-4795-b75b-2954057e2851/service_design_1768351874223.png',
       priceRange: '100 - 2000',
       count: 412
     },
     {
-      title: 'التسويق الرقمي',
-      description: 'استراتيجيات تسويقية متكاملة لنمو أعمالك',
+      title: isArabic ? 'التسويق الرقمي' : 'Digital Marketing',
+      description: isArabic ? 'استراتيجيات تسويقية متكاملة لنمو أعمالك' : 'Integrated marketing strategies for your business growth',
       image: '/brain/56fc3de5-a872-4795-b75b-2954057e2851/service_marketing_1768351891115.png',
       priceRange: '300 - 3000',
       count: 189
@@ -153,29 +153,29 @@ const Home = () => {
         {/* Content */}
         <div className="relative z-10 container-custom text-center text-white px-4 py-32">
           <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-6">
-            منصة شغل
+            {t('platformName')}
           </h1>
           <p className="text-xl md:text-2xl mb-12 max-w-3xl mx-auto leading-relaxed">
-            منصة متميزة تجمع بين طالبي الخدمات والمحترفين المتخصصين. انشر مشروعك واحصل على أفضل العروض من المستقلين، أو ابحث وتقدم للمشاريع التي تناسبك
+            {t('heroDesc')}
           </p>
 
           {/* Search Bar */}
           <div ref={searchRef} className="relative z-20 rounded-2xl shadow-2xl p-3 max-w-2xl mx-auto bg-white/10 backdrop-blur-md">
             <div className="flex gap-3">
               <div className="relative flex-1">
-                <FaSearch className="absolute right-4 top-1/2 -translate-y-1/2 text-white/70" />
+                <FaSearch className={`absolute ${isArabic ? 'right-4' : 'left-4'} top-1/2 -translate-y-1/2 text-white/70`} />
                 <input
                   type="text"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   onKeyDown={handleKeyDown}
                   onFocus={() => searchQuery.length >= 2 && suggestions.length > 0 && setShowDropdown(true)}
-                  placeholder="ابحث عن وظائف..."
-                  className="w-full px-12 py-4 bg-white/20 backdrop-blur-sm text-white placeholder-white/60 rounded-lg focus:outline-none focus:ring-2 focus:ring-white/50"
+                  placeholder={t('searchServices')}
+                  className={`w-full ${isArabic ? 'px-12' : 'px-12'} py-4 bg-white/20 backdrop-blur-sm text-white placeholder-white/60 rounded-lg focus:outline-none focus:ring-2 focus:ring-white/50`}
                 />
               </div>
               <button onClick={handleSearch} className="btn bg-teal-500 hover:bg-teal-600 text-white px-8 border-0">
-                بحث
+                {t('search')}
               </button>
             </div>
 
@@ -184,13 +184,13 @@ const Home = () => {
               <div className="absolute top-full left-3 right-3 mt-2 rounded-lg shadow-xl max-h-96 overflow-y-auto z-50 transition-colors border" style={{ backgroundColor: 'rgb(var(--bg-secondary))', borderColor: 'rgb(var(--border-primary))' }}>
                 {loading && (
                   <div className="p-4 text-center text-sm transition-colors" style={{ color: 'rgb(var(--text-secondary))' }}>
-                    جاري البحث...
+                    {t('searching')}
                   </div>
                 )}
 
                 {!loading && suggestions.length === 0 && searchQuery.length >= 2 && (
                   <div className="p-4 text-center text-sm transition-colors" style={{ color: 'rgb(var(--text-secondary))' }}>
-                    لا توجد نتائج
+                    {t('noResults')}
                   </div>
                 )}
 
@@ -208,7 +208,7 @@ const Home = () => {
                         onMouseOver={(e) => { if (index !== selectedIndex) e.currentTarget.style.backgroundColor = 'rgb(var(--bg-hover))'; }}
                         onMouseOut={(e) => { if (index !== selectedIndex) e.currentTarget.style.backgroundColor = 'transparent'; }}
                       >
-                        <div className="flex items-start justify-between gap-3">
+                        <div className="flex items-start justify-between gap-3 text-right">
                           <div className="flex-1 min-w-0">
                             <h4 className="font-medium mb-1 line-clamp-1 transition-colors" style={{ color: 'rgb(var(--text-primary))' }}>
                               {job.title}
@@ -235,15 +235,15 @@ const Home = () => {
           <div className="flex flex-wrap justify-center gap-6 mt-12">
             <div className="flex items-center gap-2 bg-white/10 backdrop-blur-sm px-6 py-3 rounded-full">
               <FaBriefcase className="text-teal-300" />
-              <span>مشاريع جديد</span>
+              <span>{t('newProjects')}</span>
             </div>
             <div className="flex items-center gap-2 bg-white/10 backdrop-blur-sm px-6 py-3 rounded-full">
               <FaUsers className="text-teal-300" />
-              <span>دعم فني متكامل</span>
+              <span>{t('technicalSupport')}</span>
             </div>
             <div className="flex items-center gap-2 bg-white/10 backdrop-blur-sm px-6 py-3 rounded-full">
               <FaCheckCircle className="text-teal-300" />
-              <span>شفافية في الخدمات</span>
+              <span>{t('transparency')}</span>
             </div>
           </div>
         </div>
@@ -254,7 +254,7 @@ const Home = () => {
         <div className="container-custom">
           <h2 className="text-3xl md:text-4xl font-bold text-center mb-16 transition-colors" style={{ color: 'rgb(var(--text-primary))' }}>
             <span className="relative inline-block">
-              لماذا طلب عرض سعر أفضل؟
+              {t('whyRequestQuoteTitle')}
               <span className="absolute -bottom-6 left-0 w-full h-2 bg-gradient-to-r from-teal-400 to-blue-500 rounded-full opacity-70"></span>
             </span>
           </h2>
@@ -277,10 +277,10 @@ const Home = () => {
             {/* Right Side - Content */}
             <div className="order-1 md:order-2">
               <div className="text-right mb-10">
-                <h3 className="text-2xl font-bold mb-3 transition-colors" style={{ color: 'rgb(var(--primary-500))' }}>معلومات</h3>
+                <h3 className="text-2xl font-bold mb-3 transition-colors" style={{ color: 'rgb(var(--primary-500))' }}>{t('infoTitle')}</h3>
                 <h4 className="text-3xl md:text-4xl font-extrabold mb-6 transition-colors" style={{ color: 'rgb(var(--text-primary))' }}>
                   <span className="relative inline-block">
-                    لماذا طلب عرض السعر؟
+                    {t('whyRequestQuoteTitle')}
                     <span className="absolute -bottom-6 left-0 w-full h-2 bg-gradient-to-r from-teal-400 to-blue-500 rounded-full opacity-70"></span>
                   </span>
                 </h4>
@@ -288,16 +288,16 @@ const Home = () => {
 
               <div className="mb-10 space-y-6 text-right">
                 <p className="text-xl md:text-2xl leading-relaxed transition-colors font-medium opacity-90" style={{ color: 'rgb(var(--text-secondary))' }}>
-                  <span className="font-extrabold" style={{ color: 'rgb(var(--text-primary))' }}>أولاً :</span> ستطلب ولن تبحث وستوفر عنا البحث
+                  {t('firstReason')}
                 </p>
                 <p className="text-xl md:text-2xl leading-relaxed transition-colors font-medium opacity-90" style={{ color: 'rgb(var(--text-secondary))' }}>
-                  <span className="font-extrabold" style={{ color: 'rgb(var(--text-primary))' }}>ثانياً :</span> ستكشف سعر السوق للخدمة التي تبحث عنها
+                  {t('secondReason')}
                 </p>
                 <p className="text-xl md:text-2xl leading-relaxed transition-colors font-medium opacity-90" style={{ color: 'rgb(var(--text-secondary))' }}>
-                  <span className="font-extrabold" style={{ color: 'rgb(var(--text-primary))' }}>ثالثاً :</span> ستتصفح السيرة الذكية للمشتغلين الجاهزين لخدمتك
+                  {t('thirdReason')}
                 </p>
                 <p className="text-xl md:text-2xl leading-relaxed transition-colors font-medium opacity-90" style={{ color: 'rgb(var(--text-secondary))' }}>
-                  <span className="font-extrabold" style={{ color: 'rgb(var(--text-primary))' }}>رابعاً :</span> ستختار السعر والمشتغل الأنسب لك بكل ثقه وراحة بال
+                  {t('fourthReason')}
                 </p>
               </div>
 
@@ -310,7 +310,7 @@ const Home = () => {
                   }}
                 >
                   <FaChartLine className="text-5xl md:text-6xl mb-6 text-teal-500 group-hover:scale-110 transition-transform duration-300" />
-                  <h5 className="font-bold text-lg md:text-xl mb-2 transition-colors group-hover:text-teal-600" style={{ color: 'rgb(var(--text-primary))' }}>تكشف أسعار السوق</h5>
+                  <h5 className="font-bold text-lg md:text-xl mb-2 transition-colors group-hover:text-teal-600" style={{ color: 'rgb(var(--text-primary))' }}>{t('marketPrice')}</h5>
                 </div>
 
                 <div
@@ -321,7 +321,7 @@ const Home = () => {
                   }}
                 >
                   <FaRegClock className="text-5xl md:text-6xl mb-6 text-teal-500 group-hover:scale-110 transition-transform duration-300" />
-                  <h5 className="font-bold text-lg md:text-xl mb-2 transition-colors group-hover:text-teal-600" style={{ color: 'rgb(var(--text-primary))' }}>توفير الوقت</h5>
+                  <h5 className="font-bold text-lg md:text-xl mb-2 transition-colors group-hover:text-teal-600" style={{ color: 'rgb(var(--text-primary))' }}>{t('saveTime')}</h5>
                 </div>
               </div>
             </div>
@@ -330,14 +330,13 @@ const Home = () => {
       </section>
 
       {/* Workflow Sections - Premium Interactive Design */}
-      {/* Workflow Section - Image */}
       <section className="py-16 md:py-24 transition-colors" style={{ backgroundColor: 'rgb(var(--bg-primary))' }}>
         <div className="container-custom relative z-10">
           <div className="flex justify-center overflow-hidden">
             <div className="relative w-full max-w-6xl">
               <img
                 src="/images/workflow_curved.png"
-                alt="Workflow Steps"
+                alt={t('howItWorks')}
                 className="w-full h-auto object-contain transition-opacity duration-300"
               />
             </div>
@@ -349,10 +348,10 @@ const Home = () => {
       <section className="py-20 transition-colors" style={{ backgroundColor: 'rgb(var(--bg-secondary))' }}>
         <div className="container-custom">
           <div className="text-center mb-4">
-            <p className="mb-2 transition-colors" style={{ color: 'rgb(var(--primary-500))' }}>بعض الخدمات وظائف شغل</p>
+            <p className="mb-2 transition-colors" style={{ color: 'rgb(var(--primary-500))' }}>{t('someServices')}</p>
             <h2 className="text-3xl md:text-4xl font-bold transition-colors" style={{ color: 'rgb(var(--text-primary))' }}>
               <span className="relative inline-block">
-                أهم الخدمات الاحترافية لتطوير وتنمية أعمالك
+                {t('servicesTitle')}
                 <span className="absolute -bottom-6 left-0 w-full h-2 bg-gradient-to-r from-teal-400 to-blue-500 rounded-full opacity-70"></span>
               </span>
             </h2>
@@ -398,18 +397,18 @@ const Home = () => {
                     {service.title}
                   </h3>
                   <p className="text-sm mb-4 line-clamp-2 leading-relaxed opacity-80" style={{ color: 'rgb(var(--text-secondary))' }}>
-                    {service.description}. مصمم جرافيك مرحبا انا أبو عدنان السوري اعمل لدى شركة فرانكو للادوات الصحية
+                    {service.description}.
                   </p>
 
                   {/* Footer Row */}
                   <div className="flex items-center justify-between mt-2 pt-2 border-t border-dashed text-xs font-medium" style={{ borderColor: 'rgb(var(--border-secondary))' }}>
                     <div className="flex items-center gap-1 font-bold text-sm" style={{ color: 'rgb(var(--primary-500))' }}>
                       <FaBriefcase />
-                      <span>ريال {parseInt(service.priceRange.split('-')[0])}</span>
+                      <span>{service.priceRange}</span>
                     </div>
                     <div className="flex items-center gap-1 opacity-60" style={{ color: 'rgb(var(--text-tertiary))' }}>
                       <FaRegClock />
-                      <span>قبل 30 دقيقة</span>
+                      <span>{t('unknown')}</span>
                     </div>
                   </div>
                 </div>
@@ -419,7 +418,7 @@ const Home = () => {
 
           <div className="text-center mt-12">
             <Link href="/jobs" className="btn bg-teal-500 hover:bg-teal-600 text-white px-12 py-4 text-lg border-0">
-              تصفح الكل
+              {t('browseAll')}
             </Link>
           </div>
         </div>

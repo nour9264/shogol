@@ -4,7 +4,8 @@ import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import { useLanguage } from '@/context/LanguageContext';
-import { jobService, proposalService } from '@/services/api';
+import ReviewModal from '@/components/Common/ReviewModal';
+import { jobService, proposalService, reviewService } from '@/services/api';
 import { useToast } from '@/context/ToastContext';
 import Loading from '@/components/Common/Loading';
 import Badge from '@/components/Common/Badge';
@@ -19,6 +20,7 @@ import {
   FaEdit,
   FaTrash,
   FaEnvelope,
+  FaStar,
 } from 'react-icons/fa';
 import {
   formatCurrency,
@@ -45,6 +47,9 @@ const JobDetails = () => {
   const [showProposalModal, setShowProposalModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [submittingProposal, setSubmittingProposal] = useState(false);
+  const [showReviewModal, setShowReviewModal] = useState(false);
+  const [submittingReview, setSubmittingReview] = useState(false);
+
   const [proposalData, setProposalData] = useState({
     description: '',
     proposedPrice: '',
@@ -157,6 +162,25 @@ const JobDetails = () => {
     }
   };
 
+  const handleReviewSubmit = async (rating: number, comment: string) => {
+    setSubmittingReview(true);
+    try {
+      if (!job) return;
+      await reviewService.addReview({
+        jobRequestId: job.id,
+        rating,
+        comment
+      });
+      success(isArabic ? 'تم إرسال التقييم بنجاح' : 'Review submitted successfully');
+      setShowReviewModal(false);
+      // Ideally refresh job details or review status here if needed
+      fetchJobDetails();
+    } catch (error: any) {
+      showError(error.response?.data?.message || (isArabic ? 'فشل إرسال التقييم' : 'Failed to submit review'));
+    }
+    setSubmittingReview(false);
+  };
+
   if (loading) return <Loading fullScreen />;
   if (!job) return <div className="text-center py-16">{isArabic ? 'المشروع غير موجود' : 'Project not found'}</div>;
 
@@ -164,9 +188,36 @@ const JobDetails = () => {
 
   return (
     <div className="min-h-screen py-8" style={{ backgroundColor: 'rgb(var(--bg-primary))' }}>
+      <ReviewModal
+        isOpen={showReviewModal}
+        onClose={() => setShowReviewModal(false)}
+        onSubmit={handleReviewSubmit}
+        isSubmitting={submittingReview}
+      />
       <div className="container-custom">
         <div className="grid lg:grid-cols-3 gap-8">
           <div className="lg:col-span-2">
+            {/* Action Buttons for Client */}
+            {isClient && isOwner && job.status === 'Completed' && (
+              <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-sm mb-6 flex items-center justify-between border border-gray-100 dark:border-gray-700">
+                <div>
+                  <h3 className="font-bold text-gray-900 dark:text-white mb-1">
+                    {isArabic ? 'تقييم المستقل' : 'Rate Freelancer'}
+                  </h3>
+                  <p className="text-sm text-gray-500 dark:text-gray-400">
+                    {isArabic ? 'شارك تجربتك مع هذا المستقل' : 'Share your experience with this freelancer'}
+                  </p>
+                </div>
+                <button
+                  onClick={() => setShowReviewModal(true)}
+                  className="px-6 py-2.5 bg-yellow-400 hover:bg-yellow-500 text-black font-bold rounded-xl transition-colors shadow-lg shadow-yellow-400/20 flex items-center gap-2"
+                >
+                  <FaStar />
+                  {isArabic ? 'تقييم' : 'Rate'}
+                </button>
+              </div>
+            )}
+
             <div className="card mb-6">
               <div className="flex items-start justify-between mb-4">
                 <div className="flex-1">
@@ -262,19 +313,43 @@ const JobDetails = () => {
                 <div>
                   <h3 className="text-xl font-bold mb-3" style={{ color: 'rgb(var(--text-primary))' }}>{isArabic ? 'المرفقات' : 'Attachments'}</h3>
                   <div className="space-y-2">
-                    {job.attachments.map((attachment) => (
-                      <a
-                        key={attachment.id}
-                        href={getImageUrl(attachment.fileUrl)}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="flex items-center gap-3 p-4 rounded-lg hover:opacity-90 transition-colors border"
-                        style={{ backgroundColor: 'rgb(var(--bg-tertiary))', borderColor: 'rgb(var(--border-primary))' }}
-                      >
-                        <FaPaperclip style={{ color: 'rgb(var(--text-secondary))' }} />
-                        <span style={{ color: 'rgb(var(--text-primary))' }}>{attachment.fileName}</span>
-                      </a>
-                    ))}
+                    {job.attachments.map((attachment) => {
+                      const isImage = /\.(jpg|jpeg|png|gif|webp|svg)$/i.test(attachment.fileName);
+                      return isImage ? (
+                        <div key={attachment.id} className="rounded-lg overflow-hidden border mb-3" style={{ borderColor: 'rgb(var(--border-primary))' }}>
+                          <div className="relative h-64 sm:h-80 w-full bg-gray-100 dark:bg-gray-900 flex items-center justify-center">
+                            <img
+                              src={getImageUrl(attachment.fileUrl)}
+                              alt={attachment.fileName}
+                              className="max-w-full max-h-full object-contain"
+                            />
+                          </div>
+                          <div className="p-3 text-sm flex justify-between items-center" style={{ backgroundColor: 'rgb(var(--bg-tertiary))' }}>
+                            <span className="truncate max-w-[70%]" style={{ color: 'rgb(var(--text-primary))' }}>{attachment.fileName}</span>
+                            <a
+                              href={getImageUrl(attachment.fileUrl)}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-primary-600 hover:text-primary-700 font-medium text-xs flex items-center gap-1"
+                            >
+                              <FaPaperclip size={12} /> {isArabic ? 'فتح الصورة' : 'Open Image'}
+                            </a>
+                          </div>
+                        </div>
+                      ) : (
+                        <a
+                          key={attachment.id}
+                          href={getImageUrl(attachment.fileUrl)}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="flex items-center gap-3 p-4 rounded-lg hover:opacity-90 transition-colors border"
+                          style={{ backgroundColor: 'rgb(var(--bg-tertiary))', borderColor: 'rgb(var(--border-primary))' }}
+                        >
+                          <FaPaperclip style={{ color: 'rgb(var(--text-secondary))' }} />
+                          <span style={{ color: 'rgb(var(--text-primary))' }}>{attachment.fileName}</span>
+                        </a>
+                      );
+                    })}
                   </div>
                 </div>
               )}

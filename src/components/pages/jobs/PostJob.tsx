@@ -40,8 +40,24 @@ const PostJob = () => {
 
   const fetchSkills = async () => {
     try {
-      const response = await userService.getAllSkills();
-      setAllSkills(response.data || []);
+      const response = await userService.getAvailableSkills();
+      const categories = response.data?.categories || response.data || [];
+
+      const flattenSkills = (items: any[]): Skill[] => {
+        let flat: Skill[] = [];
+        items.forEach(item => {
+          if (item.skills && item.skills.length > 0) {
+            flat = [...flat, ...flattenSkills(item.skills)];
+          } else {
+            flat.push(item);
+          }
+        });
+        return flat;
+      };
+
+      const flatList = Array.isArray(categories) ? flattenSkills(categories) : [];
+      console.log('Flatted skills:', flatList);
+      setAllSkills(flatList);
     } catch (error) {
       console.error('Error fetching skills:', error);
     }

@@ -2,12 +2,13 @@
 
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/context/AuthContext';
-import { jobService, proposalService } from '@/services/api';
+import { jobService, proposalService, reviewService } from '@/services/api';
 import { useToast } from '@/context/ToastContext';
 import Link from 'next/link';
 import ProtectedRoute from '@/components/Common/ProtectedRoute';
 import Loading from '@/components/Common/Loading';
 import Badge from '@/components/Common/Badge';
+import ReviewModal from '@/components/Common/ReviewModal';
 import {
   FaBriefcase,
   FaMoneyBillWave,
@@ -17,6 +18,14 @@ import {
   FaTrash,
   FaEye,
   FaPlus,
+  FaHourglassHalf,
+  FaRocket,
+  FaCheckCircle,
+  FaClipboardList,
+  FaBell,
+  FaEnvelope,
+  FaUser,
+  FaStar,
 } from 'react-icons/fa';
 import {
   formatCurrency,
@@ -41,6 +50,11 @@ const MyJobs = () => {
   // State for Freelancer (Proposals)
   const [proposals, setProposals] = useState<Proposal[]>([]);
   const [loadingProposals, setLoadingProposals] = useState(true);
+
+  // Review State
+  const [showReviewModal, setShowReviewModal] = useState(false);
+  const [selectedJobId, setSelectedJobId] = useState<number | null>(null);
+  const [submittingReview, setSubmittingReview] = useState(false);
 
   // Tab state
   const [activeTab, setActiveTab] = useState<TabType>('active');
@@ -130,6 +144,27 @@ const MyJobs = () => {
     }
   };
 
+  const handleReviewSubmit = async (rating: number, comment: string) => {
+    if (!selectedJobId) return;
+
+    setSubmittingReview(true);
+    try {
+      await reviewService.addReview({
+        jobRequestId: selectedJobId,
+        rating,
+        comment
+      });
+      success('تم إرسال التقييم بنجاح');
+      setShowReviewModal(false);
+      setSelectedJobId(null);
+      // Ideally refresh job list or update local state to show review is submitted
+      fetchMyJobs();
+    } catch (error: any) {
+      showError(error.response?.data?.message || 'فشل إرسال التقييم');
+    }
+    setSubmittingReview(false);
+  };
+
   // Filter jobs/proposals by tab
   const filterByStatus = (items: any[], tab: TabType) => {
     switch (tab) {
@@ -161,6 +196,15 @@ const MyJobs = () => {
 
   return (
     <div className="min-h-screen" style={{ backgroundColor: 'rgb(var(--bg-primary))' }}>
+      <ReviewModal
+        isOpen={showReviewModal}
+        onClose={() => {
+          setShowReviewModal(false);
+          setSelectedJobId(null);
+        }}
+        onSubmit={handleReviewSubmit}
+        isSubmitting={submittingReview}
+      />
       {/* Hero Header */}
       <div className="bg-gradient-primary text-white py-12">
         <div className="container-custom">
@@ -190,41 +234,65 @@ const MyJobs = () => {
         <div className="grid lg:grid-cols-4 gap-8">
           {/* Sidebar */}
           <div className="lg:col-span-1">
-            <div className="card sticky top-24">
-              <h3 className="font-bold mb-4" style={{ color: 'rgb(var(--text-primary))' }}>{isClient ? 'طلباتي' : 'عروضي'}</h3>
+            <div className="card sticky top-24 border border-gray-100 dark:border-gray-700 shadow-sm">
+              <div className="flex items-center gap-3 mb-6 px-2">
+                <div className="p-2 bg-primary-50 dark:bg-primary-900/20 rounded-lg text-primary-600">
+                  <FaClipboardList className="text-xl" />
+                </div>
+                <h3 className="font-bold text-lg" style={{ color: 'rgb(var(--text-primary))' }}>
+                  {isClient ? 'طلباتي' : 'عروضي'}
+                </h3>
+              </div>
 
-              <nav className="space-y-2">
-                {(['active', 'in_progress', 'completed'] as TabType[]).map((tab) => (
-                  <button
-                    key={tab}
-                    onClick={() => setActiveTab(tab)}
-                    className={`w-full text-right px-4 py-3 rounded-lg transition-colors flex items-center justify-between ${activeTab === tab
-                      ? 'bg-primary-50 text-primary-700 font-medium'
-                      : 'hover:bg-gray-50'
-                      }`}
-                    style={activeTab !== tab ? { color: 'rgb(var(--text-secondary))' } : {}}
-                  >
-                    <span>{tabLabels[tab]}</span>
-                    <span className={`text-xs px-2 py-1 rounded-full ${activeTab === tab ? 'bg-primary-200' : 'bg-gray-200'
-                      }`}>
-                      {isClient
-                        ? filterByStatus(jobs, tab).length
-                        : filterByStatus(proposals, tab).length}
-                    </span>
-                  </button>
-                ))}
+              <nav className="space-y-1">
+                {(['active', 'in_progress', 'completed'] as TabType[]).map((tab) => {
+                  const isActive = activeTab === tab;
+                  const icons = {
+                    active: FaHourglassHalf,
+                    in_progress: FaRocket,
+                    completed: FaCheckCircle,
+                  };
+                  const TabIcon = icons[tab];
+
+                  return (
+                    <button
+                      key={tab}
+                      onClick={() => setActiveTab(tab)}
+                      className={`w-full text-right px-4 py-3.5 rounded-xl transition-all duration-200 flex items-center justify-between group ${isActive
+                        ? 'bg-primary-50 dark:bg-primary-900/20 text-primary-600 font-bold shadow-sm'
+                        : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700/50 hover:text-gray-900 dark:hover:text-gray-200'
+                        }`}
+                    >
+                      <div className="flex items-center gap-3">
+                        <TabIcon className={`text-lg ${isActive ? 'text-primary-500' : 'text-gray-400 group-hover:text-primary-500 transition-colors'}`} />
+                        <span>{tabLabels[tab]}</span>
+                      </div>
+                      <span className={`text-xs px-2.5 py-1 rounded-full font-bold transition-colors ${isActive
+                        ? 'bg-primary-100 dark:bg-primary-900/40 text-primary-700 dark:text-primary-300'
+                        : 'bg-gray-100 dark:bg-gray-700 text-gray-500 group-hover:bg-gray-200 dark:group-hover:bg-gray-600'
+                        }`}>
+                        {isClient
+                          ? filterByStatus(jobs, tab).length
+                          : filterByStatus(proposals, tab).length}
+                      </span>
+                    </button>
+                  );
+                })}
               </nav>
 
-              <hr className="my-4" />
+              <hr className="my-6 border-gray-100 dark:border-gray-700" />
 
-              <nav className="space-y-2">
-                <Link href="/profile" className="block px-4 py-3 hover:bg-gray-50 rounded-lg transition-colors" style={{ color: 'rgb(var(--text-secondary))' }}>
+              <nav className="space-y-1">
+                <Link href="/profile" className="flex items-center gap-3 px-4 py-3.5 rounded-xl text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700/50 hover:text-gray-900 dark:hover:text-gray-200 transition-colors">
+                  <FaUser className="text-lg text-gray-400" />
                   الحساب الشخصي
                 </Link>
-                <Link href="/notifications" className="block px-4 py-3 hover:bg-gray-50 rounded-lg transition-colors" style={{ color: 'rgb(var(--text-secondary))' }}>
+                <Link href="/notifications" className="flex items-center gap-3 px-4 py-3.5 rounded-xl text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700/50 hover:text-gray-900 dark:hover:text-gray-200 transition-colors">
+                  <FaBell className="text-lg text-gray-400" />
                   الإشعارات
                 </Link>
-                <Link href="/messages" className="block px-4 py-3 hover:bg-gray-50 rounded-lg transition-colors" style={{ color: 'rgb(var(--text-secondary))' }}>
+                <Link href="/messages" className="flex items-center gap-3 px-4 py-3.5 rounded-xl text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700/50 hover:text-gray-900 dark:hover:text-gray-200 transition-colors">
+                  <FaEnvelope className="text-lg text-gray-400" />
                   الرسائل
                 </Link>
               </nav>
@@ -242,17 +310,42 @@ const MyJobs = () => {
               {isClient && (
                 <>
                   {filteredJobs.length === 0 ? (
-                    <div className="text-center py-12">
-                      <FaBriefcase className="text-5xl text-gray-300 mx-auto mb-4" />
-                      <p className="mb-4" style={{ color: 'rgb(var(--text-secondary))' }}>لا توجد طلبات في هذه الفئة</p>
-                      <Link href="/post-job" className="btn btn-primary">
-                        إضافة طلب جديد
-                      </Link>
+                    <div className="text-center py-16 bg-gray-50 dark:bg-gray-800/50 rounded-2xl border border-dashed border-gray-200 dark:border-gray-700">
+                      <div className="w-20 h-20 bg-primary-50 dark:bg-primary-900/20 rounded-full flex items-center justify-center mx-auto mb-6">
+                        <FaBriefcase className="text-4xl text-primary-300 dark:text-primary-600" />
+                      </div>
+                      <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">
+                        {isClient ? 'لا توجد طلبات هنا' : 'لا توجد عروض هنا'}
+                      </h3>
+                      <p className="text-gray-500 dark:text-gray-400 mb-8 max-w-sm mx-auto">
+                        {activeTab === 'active'
+                          ? (isClient ? 'لم تقم بإضافة أي طلبات بعد. ابدأ بإضافة مشروعك الأول الآن!' : 'لم تقدم أي عروض بعد. تصفح المشاريع المتاحة وابدأ في التقديم!')
+                          : activeTab === 'in_progress'
+                            ? 'لا توجد مشاريع قيد التنفيذ حالياً.'
+                            : 'لم يتم العثور على مشاريع مكتملة.'}
+                      </p>
+                      {isClient ? (
+                        <Link
+                          href="/post-job"
+                          className="inline-flex items-center gap-2 px-8 py-3 bg-primary-600 hover:bg-primary-700 text-white rounded-xl font-bold shadow-lg shadow-primary-500/30 hover:-translate-y-1 transition-all"
+                        >
+                          <FaPlus />
+                          إضافة طلب جديد
+                        </Link>
+                      ) : (
+                        <Link
+                          href="/jobs"
+                          className="inline-flex items-center gap-2 px-8 py-3 bg-primary-600 hover:bg-primary-700 text-white rounded-xl font-bold shadow-lg shadow-primary-500/30 hover:-translate-y-1 transition-all"
+                        >
+                          <FaBriefcase />
+                          تصفح المشاريع
+                        </Link>
+                      )}
                     </div>
                   ) : (
                     <div className="space-y-4">
                       {filteredJobs.map((job) => (
-                        <div key={job.id} className="border border-gray-200 rounded-xl p-6 hover:shadow-md transition-shadow">
+                        <div key={job.id} className="border border-gray-200 rounded-xl p-6 hover:shadow-md transition-shadow relative">
                           <div className="flex items-start justify-between mb-4 gap-4">
                             <div className="flex-1 min-w-0">
                               <Link
@@ -301,16 +394,30 @@ const MyJobs = () => {
                             </div>
                           )}
 
-                          <div className="flex items-center gap-3 pt-4 border-t" style={{ borderColor: 'rgb(var(--border-secondary))' }}>
-                            <Link
-                              href={`/jobs/${job.id}`}
-                              className="btn btn-outline text-sm flex items-center gap-2"
-                            >
-                              <FaEye />
-                              عرض التفاصيل
-                            </Link>
+                          <div className="flex items-center justify-between gap-3 pt-4 border-t" style={{ borderColor: 'rgb(var(--border-secondary))' }}>
+                            <div className="flex items-center gap-3">
+                              <Link
+                                href={`/jobs/${job.id}`}
+                                className="btn btn-outline text-sm flex items-center gap-2"
+                              >
+                                <FaEye />
+                                عرض التفاصيل
+                              </Link>
+                              {activeTab === 'completed' && job.status === 'Completed' && (
+                                <button
+                                  onClick={() => {
+                                    setSelectedJobId(job.id);
+                                    setShowReviewModal(true);
+                                  }}
+                                  className="btn bg-yellow-400 hover:bg-yellow-500 text-black text-sm flex items-center gap-2 shadow-sm font-bold"
+                                >
+                                  <FaStar />
+                                  تقييم المستقل
+                                </button>
+                              )}
+                            </div>
                             {job.status === 'Pending' && (
-                              <>
+                              <div className="flex items-center gap-2">
                                 <Link
                                   href={`/jobs/edit/${job.id}`}
                                   className="btn btn-outline text-sm flex items-center gap-2"
@@ -320,12 +427,12 @@ const MyJobs = () => {
                                 </Link>
                                 <button
                                   onClick={() => handleDeleteJob(job.id)}
-                                  className="btn text-red-600 border-red-200 hover:bg-red-50 text-sm flex items-center gap-2"
+                                  className="btn border border-red-500 text-red-600 hover:bg-red-50 hover:text-red-700 hover:border-red-600 text-sm flex items-center gap-2"
                                 >
                                   <FaTrash />
                                   حذف
                                 </button>
-                              </>
+                              </div>
                             )}
                           </div>
                         </div>

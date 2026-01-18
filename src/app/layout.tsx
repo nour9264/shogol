@@ -8,6 +8,7 @@ import { LanguageProvider } from '@/context/LanguageContext';
 import { NotificationProvider } from '@/context/NotificationContext';
 import Header from '@/components/Layout/Header';
 import Footer from '@/components/Layout/Footer';
+import MainContent from '@/components/Layout/MainContent';
 import ToastContainer from '@/components/Common/ToastContainer';
 import '@/app/globals.css';
 
@@ -50,7 +51,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="ar" dir="rtl" suppressHydrationWarning>
+    <html suppressHydrationWarning>
       <body suppressHydrationWarning className={cairo.className}>
         <Script src="/config.js" strategy="beforeInteractive" />
         <script dangerouslySetInnerHTML={{ __html: themeScript }} />
@@ -59,10 +60,14 @@ export default function RootLayout({
             <AuthProvider>
               <ToastProvider>
                 <NotificationProvider>
-                  <div className={`flex flex-col min-h-screen ${cairo.className}`}>
+                  <div className={`flex flex-col h-screen overflow-hidden ${cairo.className}`} style={{ backgroundColor: 'rgb(var(--bg-primary))' }}>
                     <Header />
-                    <main className="flex-grow overflow-hidden">{children}</main>
-                    <Footer />
+                    <main className="flex-grow overflow-y-auto custom-scrollbar" dir="ltr">
+                      <MainContent>
+                        {children}
+                        <Footer />
+                      </MainContent>
+                    </main>
                     <ToastContainer />
                   </div>
                 </NotificationProvider>

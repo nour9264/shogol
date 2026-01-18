@@ -28,7 +28,7 @@ const EditProfile = () => {
   const [uploadingImage, setUploadingImage] = useState(false);
   const [previewImage, setPreviewImage] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  
+
   // Image cropper state
   const [showCropper, setShowCropper] = useState(false);
   const [imageToCrop, setImageToCrop] = useState<string | null>(null);
@@ -76,12 +76,12 @@ const EditProfile = () => {
     // Close cropper
     setShowCropper(false);
     setImageToCrop(null);
-    
+
     // Convert blob to File
     const croppedFile = new File([croppedBlob], 'profile-picture.jpg', {
       type: 'image/jpeg',
     });
-    
+
     // Create preview from cropped image
     const previewUrl = URL.createObjectURL(croppedBlob);
     if (previewImage) {
@@ -102,7 +102,7 @@ const EditProfile = () => {
       setPreviewImage(null);
     }
     setUploadingImage(false);
-    
+
     // Clear file input
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
@@ -135,10 +135,10 @@ const EditProfile = () => {
   if (!user) return null;
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
+    <div className="min-h-screen py-8" style={{ backgroundColor: 'rgb(var(--bg-primary))' }}>
       <div className="container-custom max-w-2xl">
         <div className="card">
-          <h1 className="text-3xl font-bold text-gray-900 mb-8">تعديل الملف الشخصي</h1>
+          <h1 className="text-3xl font-bold mb-8" style={{ color: 'rgb(var(--text-primary))' }}>تعديل الملف الشخصي</h1>
 
           <div className="flex flex-col items-center mb-8">
             <div className="relative">
@@ -166,8 +166,8 @@ const EditProfile = () => {
             <p className="text-sm text-gray-500 mt-2">اضغط على أيقونة الكاميرا لتغيير الصورة</p>
           </div>
 
-          <form 
-            onSubmit={handleSubmit(onSubmit)} 
+          <form
+            onSubmit={handleSubmit(onSubmit)}
             onKeyDown={(e) => {
               if (e.key === 'Enter' || e.code === 'Enter' || e.keyCode === 13) {
                 const tagName = (e.target as HTMLElement).tagName.toLowerCase();
