@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import { userService } from '@/services/api';
@@ -67,13 +67,7 @@ const PublicProfile = () => {
     const [profile, setProfile] = useState<FreelancerDetails | null>(null);
     const [loading, setLoading] = useState(true);
 
-    useEffect(() => {
-        if (params.id) {
-            fetchProfile(params.id as string);
-        }
-    }, [params.id]);
-
-    const fetchProfile = async (id: string) => {
+    const fetchProfile = useCallback(async (id: string) => {
         try {
             const response = await userService.getFreelancerDetails(id);
             console.log('Freelancer Details:', response.data);
@@ -96,7 +90,13 @@ const PublicProfile = () => {
         } finally {
             setLoading(false);
         }
-    };
+    }, []);
+
+    useEffect(() => {
+        if (params.id) {
+            fetchProfile(params.id as string);
+        }
+    }, [params.id, fetchProfile]);
 
     if (loading) {
         return (
@@ -318,14 +318,14 @@ const ReviewSlider = ({ reviews }: { reviews: Review[] }) => {
     const [currentIndex, setCurrentIndex] = useState(0);
     const { isArabic } = useLanguage();
 
-    const nextSlide = () => setCurrentIndex((prev) => (prev + 1) % reviews.length);
+    const nextSlide = useCallback(() => setCurrentIndex((prev) => (prev + 1) % reviews.length), [reviews.length]);
     const prevSlide = () => setCurrentIndex((prev) => (prev - 1 + reviews.length) % reviews.length);
 
     useEffect(() => {
         if (reviews.length <= 1) return;
         const interval = setInterval(nextSlide, 8000); // Slower interval for reading reviews
         return () => clearInterval(interval);
-    }, [reviews.length]);
+    }, [reviews.length, nextSlide]);
 
     const currentReview = reviews[currentIndex];
 
