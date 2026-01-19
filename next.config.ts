@@ -16,21 +16,25 @@ const nextConfig: NextConfig = {
         hostname: 'localhost',
         port: '7035',
       },
+      {
+        protocol: 'https',
+        hostname: 'globallink.runasp.net',
+      },
     ],
   },
   async rewrites() {
     return [
       {
         source: '/api-proxy/:path*',
-        destination: 'https://unceriferous-eda-nonseasonally.ngrok-free.dev/api/:path*',
+        destination: 'https://globallink.runasp.net/api/:path*',
       },
       {
         source: '/notificationHub/:path*',
-        destination: 'https://unceriferous-eda-nonseasonally.ngrok-free.dev/notificationHub/:path*',
+        destination: 'https://globallink.runasp.net/notificationHub/:path*',
       },
       {
         source: '/chatHub/:path*',
-        destination: 'https://unceriferous-eda-nonseasonally.ngrok-free.dev/chatHub/:path*',
+        destination: 'https://globallink.runasp.net/chatHub/:path*',
       },
     ];
   },

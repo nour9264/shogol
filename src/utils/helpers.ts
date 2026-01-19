@@ -221,22 +221,23 @@ export const getImageUrl = (url: string | null | undefined, fallback = DEFAULT_A
   }
 
   // Define URLs
-  const ngrokUrl = 'https://unceriferous-eda-nonseasonally.ngrok-free.dev';
-  const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL?.replace('/api', '') || ngrokUrl;
+  const backLink = 'https://globallink.runasp.net';
+  const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL?.replace('/api', '') || backLink;
 
   let finalUrl = url;
 
-  // 1. Handle localhost URLs -> Convert to Ngrok
+  // 1. Handle localhost URLs -> Convert to Production Backend
   if (url.includes('localhost:7035') || url.includes('localhost:5001') || url.includes('localhost')) {
-    finalUrl = url.replace(/https?:\/\/localhost:\d+/, ngrokUrl);
+    finalUrl = url.replace(/https?:\/\/localhost:\d+/, backLink);
   }
   // 2. Handle Relative URLs -> Prepend Base URL
   else if (!url.startsWith('http')) {
     finalUrl = url.startsWith('/') ? `${baseUrl}${url}` : `${baseUrl}/${url}`;
   }
 
-  // 3. PROXY: If it points to Ngrok, route through our local proxy to skip warnings
-  if (finalUrl.includes('ngrok-free.dev')) {
+  // 3. PROXY: If it points to the backend (runasp), route through our local proxy to avoid CORS/MIXED content issues if needed
+  // Note: runasp.net is already https, so proxy might be optional but keeping it for consistency if it was needed for ngrok
+  if (finalUrl.includes('runasp.net')) {
     return `/api/image-proxy?url=${encodeURIComponent(finalUrl)}`;
   }
 

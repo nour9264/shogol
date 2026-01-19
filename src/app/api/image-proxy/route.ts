@@ -8,11 +8,7 @@ export async function GET(request: NextRequest) {
     }
 
     try {
-        const response = await fetch(url, {
-            headers: {
-                'ngrok-skip-browser-warning': 'true',
-            },
-        });
+        const response = await fetch(url);
 
         if (!response.ok) {
             return new NextResponse(`Failed to fetch image: ${response.statusText}`, { status: response.status });
