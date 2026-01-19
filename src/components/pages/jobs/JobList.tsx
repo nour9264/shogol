@@ -1,13 +1,14 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, Suspense } from 'react'; // Added Suspense
+import { useRouter, usePathname, useSearchParams } from 'next/navigation';
 import { FaSearch, FaFilter } from 'react-icons/fa';
 import { jobService } from '@/services/api';
 import JobCard from '@/components/Cards/JobCard';
 import Loading from '@/components/Common/Loading';
 import { debounce } from '@/utils/helpers';
 import type { JobRequest } from '@/types';
-import styles from './JobList.module.css';
+// import styles from './JobList.module.css'; // Removed unused import if not verified, but keeping if styles are used elsewhere. 
 
 interface Filters {
   minBudget: string;
@@ -22,59 +23,135 @@ interface Pagination {
   totalCount: number;
 }
 
-const JobList = () => {
-  const [jobs, setJobs] = useState<JobRequest[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [searchTerm, setSearchTerm] = useState('');
+interface JobListProps {
+  initialJobs: JobRequest[];
+  initialPagination: Pagination;
+}
+
+const JobListContent = ({ initialJobs, initialPagination }: JobListProps) => {
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+
+  // Initialize state from URL params
+  const [searchTerm, setSearchTerm] = useState(searchParams.get('q') || '');
   const [filters, setFilters] = useState<Filters>({
-    minBudget: '',
-    maxBudget: '',
-    status: 'Pending',
+    minBudget: searchParams.get('minBudget') || '',
+    maxBudget: searchParams.get('maxBudget') || '',
+    status: searchParams.get('status') || 'Pending',
   });
+
+  const [jobs, setJobs] = useState<JobRequest[]>(initialJobs);
+  const [loading, setLoading] = useState(false);
   const [showFilters, setShowFilters] = useState(false);
-  const [pagination, setPagination] = useState<Pagination>({
-    pageNumber: 1,
-    pageSize: 12,
-    totalPages: 1,
-    totalCount: 0,
-  });
+  const [pagination, setPagination] = useState<Pagination>(initialPagination);
+
+  // Create a query string generator
+  const createQueryString = useCallback(
+    (name: string, value: string) => {
+      const params = new URLSearchParams(searchParams.toString());
+
+      if (value) {
+        params.set(name, value);
+      } else {
+        params.delete(name);
+      }
+
+      // Reset page when filters change (unless updating page itself)
+      if (name !== 'page') {
+        params.set('page', '1');
+      }
+
+      return params.toString();
+    },
+    [searchParams]
+  );
+
+  // Function to update URL
+  const updateUrl = (newParams: URLSearchParams) => {
+    router.push(`${pathname}?${newParams.toString()}`, { scroll: false });
+  };
 
   const fetchJobs = useCallback(async () => {
     setLoading(true);
     try {
+      // Get values directly from URL to ensure sync
+      const currentSearch = searchParams.get('q') || '';
+      const currentStatus = searchParams.get('status') || 'Pending';
+      const currentMin = searchParams.get('minBudget');
+      const currentMax = searchParams.get('maxBudget');
+      const currentPage = parseInt(searchParams.get('page') || '1');
+
       const response = await jobService.searchJobs({
-        searchTerm,
-        status: filters.status || undefined,
-        minBudget: filters.minBudget ? parseFloat(filters.minBudget) : undefined,
-        maxBudget: filters.maxBudget ? parseFloat(filters.maxBudget) : undefined,
-        pageNumber: pagination.pageNumber,
+        searchTerm: currentSearch,
+        status: currentStatus,
+        minBudget: currentMin ? parseFloat(currentMin) : undefined,
+        maxBudget: currentMax ? parseFloat(currentMax) : undefined,
+        pageNumber: currentPage,
         pageSize: pagination.pageSize,
       });
 
       setJobs(response.data.jobRequests || []);
-      setPagination({
-        ...pagination,
+      setPagination(prev => ({
+        ...prev,
+        pageNumber: currentPage,
         totalPages: response.data.totalPages || 1,
         totalCount: response.data.totalCount || 0,
-      });
+      }));
     } catch (error) {
       console.error('Error fetching jobs:', error);
     }
     setLoading(false);
-  }, [searchTerm, filters, pagination.pageNumber, pagination.pageSize]);
+  }, [searchParams, pagination.pageSize]);
 
+  // Fetch when URL params change
   useEffect(() => {
     fetchJobs();
   }, [fetchJobs]);
 
+  // Sync local state when URL changes (handling browser back/forward)
+  useEffect(() => {
+    setSearchTerm(searchParams.get('q') || '');
+    setFilters({
+      minBudget: searchParams.get('minBudget') || '',
+      maxBudget: searchParams.get('maxBudget') || '',
+      status: searchParams.get('status') || 'Pending',
+    });
+  }, [searchParams]);
+
   const handleSearch = debounce((value: string) => {
-    setSearchTerm(value);
-    setPagination({ ...pagination, pageNumber: 1 });
+    const params = new URLSearchParams(searchParams.toString());
+    if (value) {
+      params.set('q', value);
+    } else {
+      params.delete('q');
+    }
+    params.set('page', '1');
+    updateUrl(params);
   }, 500);
 
+  // Update local state immediately for input UI
+  const onSearchInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchTerm(e.target.value);
+    handleSearch(e.target.value);
+  };
+
   const handleFilterChange = (key: keyof Filters, value: string) => {
-    setFilters({ ...filters, [key]: value });
-    setPagination({ ...pagination, pageNumber: 1 });
+    setFilters(prev => ({ ...prev, [key]: value })); // Update local UI immediately
+    const params = new URLSearchParams(searchParams.toString());
+    if (value) {
+      params.set(key, value);
+    } else {
+      params.delete(key);
+    }
+    params.set('page', '1');
+    updateUrl(params);
+  };
+
+  const handlePageChange = (newPage: number) => {
+    const params = new URLSearchParams(searchParams.toString());
+    params.set('page', newPage.toString());
+    updateUrl(params);
   };
 
   return (
@@ -91,15 +168,16 @@ const JobList = () => {
               <FaSearch className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400" />
               <input
                 type="text"
+                value={searchTerm}
                 placeholder="ابحث عن مشروع..."
-                onChange={(e) => handleSearch(e.target.value)}
+                onChange={onSearchInputChange}
                 className="input pr-12"
               />
             </div>
 
             <button
               onClick={() => setShowFilters(!showFilters)}
-              className="btn btn-outline flex items-center gap-2"
+              className={`btn btn-outline flex items-center gap-2 ${showFilters ? 'bg-primary-50 text-primary-600' : ''}`}
             >
               <FaFilter />
               تصفية
@@ -167,7 +245,7 @@ const JobList = () => {
             {pagination.totalPages > 1 && (
               <div className="flex justify-center gap-2">
                 <button
-                  onClick={() => setPagination({ ...pagination, pageNumber: pagination.pageNumber - 1 })}
+                  onClick={() => handlePageChange(pagination.pageNumber - 1)}
                   disabled={pagination.pageNumber === 1}
                   className="btn btn-outline disabled:opacity-50 disabled:cursor-not-allowed"
                 >
@@ -178,10 +256,10 @@ const JobList = () => {
                   {[...Array(pagination.totalPages)].map((_, index) => (
                     <button
                       key={index}
-                      onClick={() => setPagination({ ...pagination, pageNumber: index + 1 })}
+                      onClick={() => handlePageChange(index + 1)}
                       className={`w-10 h-10 rounded-lg font-medium transition-colors ${pagination.pageNumber === index + 1
-                          ? 'bg-primary-500 text-white'
-                          : 'hover:bg-primary-50'
+                        ? 'bg-primary-500 text-white'
+                        : 'hover:bg-primary-50'
                         }`}
                       style={pagination.pageNumber !== index + 1 ? {
                         backgroundColor: 'rgb(var(--bg-secondary))',
@@ -195,7 +273,7 @@ const JobList = () => {
                 </div>
 
                 <button
-                  onClick={() => setPagination({ ...pagination, pageNumber: pagination.pageNumber + 1 })}
+                  onClick={() => handlePageChange(pagination.pageNumber + 1)}
                   disabled={pagination.pageNumber === pagination.totalPages}
                   className="btn btn-outline disabled:opacity-50 disabled:cursor-not-allowed"
                 >
@@ -215,6 +293,13 @@ const JobList = () => {
     </div>
   );
 };
+
+// Wrap in Suspense for Next.js build time compatibility
+const JobList = (props: JobListProps) => (
+  <Suspense fallback={<Loading />}>
+    <JobListContent {...props} />
+  </Suspense>
+);
 
 export default JobList;
 

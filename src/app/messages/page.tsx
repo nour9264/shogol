@@ -1,6 +1,8 @@
 import Messages from '@/components/pages/Messages';
 import ProtectedRoute from '@/components/Common/ProtectedRoute';
 
+export const dynamic = 'force-dynamic';
+
 export default function MessagesPage() {
   return (
     <ProtectedRoute>

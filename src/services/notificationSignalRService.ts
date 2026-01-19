@@ -57,16 +57,24 @@ class NotificationSignalRService {
             this.setupEventHandlers();
 
             // Start connection
-            await this.connection.start();
-            console.log('✅ NotificationHub Connected!');
+            try {
+                await this.connection.start();
+                console.log('✅ NotificationHub Connected!');
+            } catch (startError: any) {
+                // If start fails, clean up the connection
+                this.connection = null;
+                this.isConnecting = false;
+                throw startError;
+            }
         } catch (error: any) {
             // Log error but don't spam console if backend is down
             const isNetworkError = error?.message?.includes('Failed to fetch') ||
-                error?.message?.includes('negotiation');
+                error?.message?.includes('negotiation') ||
+                error?.message?.includes('HttpConnection');
             if (!isNetworkError) {
                 console.error('❌ NotificationHub Connection Failed:', error);
             }
-            throw error;
+            // Don't throw error - allow app to continue without notifications
         } finally {
             this.isConnecting = false;
         }
@@ -109,9 +117,11 @@ class NotificationSignalRService {
 
         // Handle connection closed
         this.connection.onclose((error) => {
-            console.error('❌ NotificationHub: Connection closed:', error);
             if (error) {
+                console.error('❌ NotificationHub: Connection closed with error:', error);
                 console.log('🔄 NotificationHub: Will attempt to reconnect...');
+            } else {
+                console.log('NotificationHub: Connection closed normally');
             }
         });
     }

@@ -1,13 +1,14 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, Suspense } from 'react';
+import { useRouter, usePathname, useSearchParams } from 'next/navigation';
 import { FaSearch, FaFilter } from 'react-icons/fa';
 import { userService } from '@/services/api';
 import FreelancerCard from '@/components/Cards/FreelancerCard';
 import Loading from '@/components/Common/Loading';
 import { debounce } from '@/utils/helpers';
 import type { Freelancer } from '@/types';
-import styles from './FreelancerList.module.css';
+// import styles from './FreelancerList.module.css';
 
 interface Filters {
   minRating: string;
@@ -22,55 +23,126 @@ interface Pagination {
   totalCount: number;
 }
 
-const FreelancerList = () => {
-  const [freelancers, setFreelancers] = useState<Freelancer[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [searchTerm, setSearchTerm] = useState('');
+interface FreelancerListProps {
+  initialFreelancers: Freelancer[];
+  initialPagination: Pagination;
+}
+
+const FreelancerListContent = ({ initialFreelancers, initialPagination }: FreelancerListProps) => {
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+
+  // Initialize state from URL params
+  const [searchTerm, setSearchTerm] = useState(searchParams.get('q') || '');
   const [filters, setFilters] = useState<Filters>({
-    minRating: '',
-    nationality: '',
-    skillIds: [],
-  });
-  const [showFilters, setShowFilters] = useState(false);
-  const [pagination, setPagination] = useState<Pagination>({
-    pageNumber: 1,
-    pageSize: 12,
-    totalPages: 1,
-    totalCount: 0,
+    minRating: searchParams.get('minRating') || '',
+    nationality: searchParams.get('nationality') || '',
+    skillIds: searchParams.get('skillIds')?.split(',').map(Number) || [],
   });
 
+  const [freelancers, setFreelancers] = useState<Freelancer[]>(initialFreelancers);
+  const [loading, setLoading] = useState(false);
+  const [showFilters, setShowFilters] = useState(false);
+  const [pagination, setPagination] = useState<Pagination>(initialPagination);
+
+  // Function to update URL
+  const updateUrl = (newParams: URLSearchParams) => {
+    router.push(`${pathname}?${newParams.toString()}`, { scroll: false });
+  };
+
   const fetchFreelancers = useCallback(async () => {
+    // Only fetch if we are actually navigating or it's a browser back/forward
     setLoading(true);
     try {
+      const currentSearch = searchParams.get('q') || '';
+      const currentRating = searchParams.get('minRating') || '';
+      const currentNationality = searchParams.get('nationality') || '';
+      const currentSkills = searchParams.get('skillIds') || '';
+      const currentPage = parseInt(searchParams.get('page') || '1');
+
       const response = await userService.searchFreelancers({
-        searchTerm,
-        nationality: filters.nationality || undefined,
-        skillIds: filters.skillIds.length > 0 ? filters.skillIds : undefined,
-        minRating: filters.minRating ? parseFloat(filters.minRating) : undefined,
-        pageNumber: pagination.pageNumber,
+        searchTerm: currentSearch,
+        nationality: currentNationality || undefined,
+        skillIds: currentSkills ? currentSkills.split(',').map(Number) : undefined,
+        minRating: currentRating ? parseFloat(currentRating) : undefined,
+        pageNumber: currentPage,
         pageSize: pagination.pageSize,
       });
 
       setFreelancers(response.data.freelancers || []);
-      setPagination({
-        ...pagination,
+      setPagination(prev => ({
+        ...prev,
+        pageNumber: currentPage,
         totalPages: response.data.totalPages || 1,
         totalCount: response.data.totalCount || 0,
-      });
+      }));
     } catch (error) {
       console.error('Error fetching freelancers:', error);
     }
     setLoading(false);
-  }, [searchTerm, filters, pagination.pageNumber, pagination.pageSize]);
+  }, [searchParams, pagination.pageSize]);
 
+  // Sync when URL changes
   useEffect(() => {
+    // Check if current page state matches URL, if not, fetch
+    const currentPageInUrl = parseInt(searchParams.get('page') || '1');
+    const currentQInUrl = searchParams.get('q') || '';
+
+    // Simple logic: fetch when search params change
     fetchFreelancers();
-  }, [fetchFreelancers]);
+
+    setSearchTerm(currentQInUrl);
+    setFilters({
+      minRating: searchParams.get('minRating') || '',
+      nationality: searchParams.get('nationality') || '',
+      skillIds: searchParams.get('skillIds')?.split(',').map(Number) || [],
+    });
+  }, [searchParams, fetchFreelancers]);
 
   const handleSearch = debounce((value: string) => {
-    setSearchTerm(value);
-    setPagination({ ...pagination, pageNumber: 1 });
+    const params = new URLSearchParams(searchParams.toString());
+    if (value) {
+      params.set('q', value);
+    } else {
+      params.delete('q');
+    }
+    params.set('page', '1');
+    updateUrl(params);
   }, 500);
+
+  // Update local state immediately for input UI
+  const onSearchInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchTerm(e.target.value);
+    handleSearch(e.target.value);
+  };
+
+  const handleFilterChange = (key: keyof Filters, value: any) => {
+    const params = new URLSearchParams(searchParams.toString());
+
+    if (key === 'skillIds') {
+      if (value && value.length > 0) {
+        params.set('skillIds', value.join(','));
+      } else {
+        params.delete('skillIds');
+      }
+    } else {
+      if (value) {
+        params.set(key, value);
+      } else {
+        params.delete(key);
+      }
+    }
+
+    params.set('page', '1');
+    updateUrl(params);
+  };
+
+  const handlePageChange = (newPage: number) => {
+    const params = new URLSearchParams(searchParams.toString());
+    params.set('page', newPage.toString());
+    updateUrl(params);
+  };
 
   return (
     <div className="min-h-screen py-8" style={{ backgroundColor: 'rgb(var(--bg-primary))' }}>
@@ -86,14 +158,15 @@ const FreelancerList = () => {
               <FaSearch className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400" />
               <input
                 type="text"
+                value={searchTerm}
                 placeholder="ابحث عن مستقل..."
-                onChange={(e) => handleSearch(e.target.value)}
+                onChange={onSearchInputChange}
                 className="input pr-12"
               />
             </div>
             <button
               onClick={() => setShowFilters(!showFilters)}
-              className="btn btn-outline flex items-center gap-2"
+              className={`btn btn-outline flex items-center gap-2 ${showFilters ? 'bg-primary-50 text-primary-600' : ''}`}
             >
               <FaFilter />
               تصفية
@@ -106,7 +179,7 @@ const FreelancerList = () => {
                 <label className="label">الحد الأدنى للتقييم</label>
                 <select
                   value={filters.minRating}
-                  onChange={(e) => setFilters({ ...filters, minRating: e.target.value })}
+                  onChange={(e) => handleFilterChange('minRating', e.target.value)}
                   className="input"
                 >
                   <option value="">الكل</option>
@@ -121,7 +194,7 @@ const FreelancerList = () => {
                 <label className="label">الجنسية</label>
                 <select
                   value={filters.nationality}
-                  onChange={(e) => setFilters({ ...filters, nationality: e.target.value })}
+                  onChange={(e) => handleFilterChange('nationality', e.target.value)}
                   className="input"
                 >
                   <option value="">الكل</option>
@@ -155,7 +228,7 @@ const FreelancerList = () => {
             {pagination.totalPages > 1 && (
               <div className="flex justify-center gap-2">
                 <button
-                  onClick={() => setPagination({ ...pagination, pageNumber: pagination.pageNumber - 1 })}
+                  onClick={() => handlePageChange(pagination.pageNumber - 1)}
                   disabled={pagination.pageNumber === 1}
                   className="btn btn-outline disabled:opacity-50"
                 >
@@ -166,10 +239,10 @@ const FreelancerList = () => {
                   {[...Array(pagination.totalPages)].map((_, index) => (
                     <button
                       key={index}
-                      onClick={() => setPagination({ ...pagination, pageNumber: index + 1 })}
+                      onClick={() => handlePageChange(index + 1)}
                       className={`w-10 h-10 rounded-lg font-medium ${pagination.pageNumber === index + 1
-                          ? 'bg-primary-500 text-white'
-                          : 'hover:bg-primary-50'
+                        ? 'bg-primary-500 text-white'
+                        : 'hover:bg-primary-50'
                         }`}
                       style={pagination.pageNumber !== index + 1 ? {
                         backgroundColor: 'rgb(var(--bg-secondary))',
@@ -183,7 +256,7 @@ const FreelancerList = () => {
                 </div>
 
                 <button
-                  onClick={() => setPagination({ ...pagination, pageNumber: pagination.pageNumber + 1 })}
+                  onClick={() => handlePageChange(pagination.pageNumber + 1)}
                   disabled={pagination.pageNumber === pagination.totalPages}
                   className="btn btn-outline disabled:opacity-50"
                 >
@@ -203,6 +276,12 @@ const FreelancerList = () => {
     </div>
   );
 };
+
+const FreelancerList = (props: FreelancerListProps) => (
+  <Suspense fallback={<Loading />}>
+    <FreelancerListContent {...props} />
+  </Suspense>
+);
 
 export default FreelancerList;
 

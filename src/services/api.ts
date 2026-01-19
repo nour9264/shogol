@@ -11,9 +11,9 @@ declare global {
 }
 
 
-export const API_BASE_URL = 'https://unceriferous-eda-nonseasonally.ngrok-free.dev/api';
-export const HUB_URL = API_BASE_URL.replace('/api', '/chatHub');
-export const NOTIFICATION_HUB_URL = API_BASE_URL.replace('/api', '/notificationHub');
+export const API_BASE_URL = '/api-proxy';
+export const HUB_URL = '/chatHub';
+export const NOTIFICATION_HUB_URL = '/notificationHub';
 
 // Extend AxiosRequestConfig to include metadata
 interface ExtendedAxiosRequestConfig extends InternalAxiosRequestConfig {
@@ -277,6 +277,16 @@ export const userService = {
     const formData = new FormData();
     formData.append('profilePicture', file);
     return api.post<{ imageUrl: string; message: string }>('/User/profile-picture', formData, {
+      headers: {
+        'Content-Type': undefined as unknown as string,
+      },
+    });
+  },
+
+  updateCoverImage: (file: File) => {
+    const formData = new FormData();
+    formData.append('CoverImage', file);
+    return api.post<{ imageUrl: string; message: string }>('/User/cover-image', formData, {
       headers: {
         'Content-Type': undefined as unknown as string,
       },

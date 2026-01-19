@@ -6,6 +6,7 @@ export interface User {
   email: string;
   phoneNumber: string;
   profilePictureUrl: string | null;
+  coverImageUrl?: string | null;
   gender: string | null;
   nationality: string | null;
   bio: string | null;

@@ -10,6 +10,8 @@ import { useToast } from '@/context/ToastContext';
 import { useAuth } from '@/context/AuthContext';
 import { authService } from '@/services/api';
 
+export const dynamic = 'force-dynamic';
+
 interface ResetPasswordFormData {
   newPassword: string;
   confirmPassword: string;

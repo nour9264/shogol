@@ -135,87 +135,89 @@ const termsSections: TermsSection[] = [
   },
 ];
 
+export const dynamic = 'force-dynamic';
+
 export default function TermsPage() {
   const { isArabic } = useLanguage();
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors">
-        {/* Hero Section */}
-        <section className="bg-gradient-to-br from-primary-600 to-primary-800 text-white py-16">
-          <div className="container-custom text-center">
-            <FaFileContract className="text-5xl mx-auto mb-4" />
-            <h1 className="text-4xl md:text-5xl font-bold mb-4">
-              {isArabic ? 'شروط الاستخدام' : 'Terms of Use'}
-            </h1>
-            <p className="text-xl text-white/90 max-w-2xl mx-auto">
-              {isArabic 
-                ? 'يرجى قراءة شروط الاستخدام بعناية قبل استخدام منصة شغل'
-                : 'Please read the terms of use carefully before using the SHOGOL platform'}
-            </p>
-            <p className="text-sm text-white/70 mt-4">
-              {isArabic ? 'آخر تحديث: ديسمبر 2024' : 'Last updated: December 2024'}
-            </p>
-          </div>
-        </section>
-
-        <div className="container-custom py-12">
-          {/* Introduction */}
-          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-soft p-8 mb-8 transition-colors">
-            <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">
-              {isArabic ? 'مقدمة' : 'Introduction'}
-            </h2>
-            <p className="text-gray-600 dark:text-gray-300 leading-relaxed">
-              {isArabic 
-                ? 'مرحبًا بك في منصة شغل للعمل الحر. باستخدامك للمنصة، فإنك توافق على الالتزام بشروط الاستخدام هذه. تحكم هذه الشروط العلاقة بينك وبين المنصة وتحدد حقوق والتزامات كل طرف. نحتفظ بحق تعديل هذه الشروط في أي وقت، وسيتم إعلامك بأي تغييرات جوهرية.'
-                : 'Welcome to the SHOGOL freelancing platform. By using the platform, you agree to comply with these terms of use. These terms govern the relationship between you and the platform and define the rights and obligations of each party. We reserve the right to modify these terms at any time, and you will be notified of any material changes.'}
-            </p>
-          </div>
-
-          {/* Terms Sections */}
-          <div className="space-y-6">
-            {termsSections.map((section, index) => (
-              <div 
-                key={index}
-                className="bg-white dark:bg-gray-800 rounded-2xl shadow-soft p-8 transition-colors"
-              >
-                <div className="flex items-center gap-4 mb-6">
-                  <div className="w-12 h-12 bg-primary-100 dark:bg-primary-900/30 rounded-xl flex items-center justify-center text-primary-600 dark:text-primary-400">
-                    {section.icon}
-                  </div>
-                  <h2 className="text-xl font-bold text-gray-900 dark:text-white">
-                    {isArabic ? section.title.ar : section.title.en}
-                  </h2>
-                </div>
-                <ul className="space-y-3">
-                  {(isArabic ? section.content.ar : section.content.en).map((item, itemIndex) => (
-                    <li 
-                      key={itemIndex}
-                      className="flex items-start gap-3 text-gray-600 dark:text-gray-300"
-                    >
-                      <span className="w-2 h-2 bg-primary-500 rounded-full mt-2 flex-shrink-0"></span>
-                      {item}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            ))}
-          </div>
-
-          {/* Contact */}
-          <div className="mt-8 bg-gray-100 dark:bg-gray-800 rounded-2xl p-8 text-center transition-colors">
-            <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-4">
-              {isArabic ? 'هل لديك أسئلة؟' : 'Have questions?'}
-            </h3>
-            <p className="text-gray-600 dark:text-gray-300 mb-6">
-              {isArabic 
-                ? 'إذا كان لديك أي استفسار حول شروط الاستخدام، تواصل معنا'
-                : 'If you have any questions about the terms of use, contact us'}
-            </p>
-            <Link href="/contact" className="btn btn-primary">
-              {isArabic ? 'تواصل معنا' : 'Contact Us'}
-            </Link>
-          </div>
+      {/* Hero Section */}
+      <section className="bg-gradient-to-br from-primary-600 to-primary-800 text-white py-16">
+        <div className="container-custom text-center">
+          <FaFileContract className="text-5xl mx-auto mb-4" />
+          <h1 className="text-4xl md:text-5xl font-bold mb-4">
+            {isArabic ? 'شروط الاستخدام' : 'Terms of Use'}
+          </h1>
+          <p className="text-xl text-white/90 max-w-2xl mx-auto">
+            {isArabic
+              ? 'يرجى قراءة شروط الاستخدام بعناية قبل استخدام منصة شغل'
+              : 'Please read the terms of use carefully before using the SHOGOL platform'}
+          </p>
+          <p className="text-sm text-white/70 mt-4">
+            {isArabic ? 'آخر تحديث: ديسمبر 2024' : 'Last updated: December 2024'}
+          </p>
         </div>
+      </section>
+
+      <div className="container-custom py-12">
+        {/* Introduction */}
+        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-soft p-8 mb-8 transition-colors">
+          <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">
+            {isArabic ? 'مقدمة' : 'Introduction'}
+          </h2>
+          <p className="text-gray-600 dark:text-gray-300 leading-relaxed">
+            {isArabic
+              ? 'مرحبًا بك في منصة شغل للعمل الحر. باستخدامك للمنصة، فإنك توافق على الالتزام بشروط الاستخدام هذه. تحكم هذه الشروط العلاقة بينك وبين المنصة وتحدد حقوق والتزامات كل طرف. نحتفظ بحق تعديل هذه الشروط في أي وقت، وسيتم إعلامك بأي تغييرات جوهرية.'
+              : 'Welcome to the SHOGOL freelancing platform. By using the platform, you agree to comply with these terms of use. These terms govern the relationship between you and the platform and define the rights and obligations of each party. We reserve the right to modify these terms at any time, and you will be notified of any material changes.'}
+          </p>
+        </div>
+
+        {/* Terms Sections */}
+        <div className="space-y-6">
+          {termsSections.map((section, index) => (
+            <div
+              key={index}
+              className="bg-white dark:bg-gray-800 rounded-2xl shadow-soft p-8 transition-colors"
+            >
+              <div className="flex items-center gap-4 mb-6">
+                <div className="w-12 h-12 bg-primary-100 dark:bg-primary-900/30 rounded-xl flex items-center justify-center text-primary-600 dark:text-primary-400">
+                  {section.icon}
+                </div>
+                <h2 className="text-xl font-bold text-gray-900 dark:text-white">
+                  {isArabic ? section.title.ar : section.title.en}
+                </h2>
+              </div>
+              <ul className="space-y-3">
+                {(isArabic ? section.content.ar : section.content.en).map((item, itemIndex) => (
+                  <li
+                    key={itemIndex}
+                    className="flex items-start gap-3 text-gray-600 dark:text-gray-300"
+                  >
+                    <span className="w-2 h-2 bg-primary-500 rounded-full mt-2 flex-shrink-0"></span>
+                    {item}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ))}
+        </div>
+
+        {/* Contact */}
+        <div className="mt-8 bg-gray-100 dark:bg-gray-800 rounded-2xl p-8 text-center transition-colors">
+          <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-4">
+            {isArabic ? 'هل لديك أسئلة؟' : 'Have questions?'}
+          </h3>
+          <p className="text-gray-600 dark:text-gray-300 mb-6">
+            {isArabic
+              ? 'إذا كان لديك أي استفسار حول شروط الاستخدام، تواصل معنا'
+              : 'If you have any questions about the terms of use, contact us'}
+          </p>
+          <Link href="/contact" className="btn btn-primary">
+            {isArabic ? 'تواصل معنا' : 'Contact Us'}
+          </Link>
+        </div>
+      </div>
     </div>
   );
 }

@@ -6,6 +6,8 @@ import { FaEnvelope, FaPhone, FaMapMarkerAlt, FaPaperPlane, FaFacebook, FaTwitte
 import { useLanguage } from '@/context/LanguageContext';
 import { useToast } from '@/context/ToastContext';
 
+export const dynamic = 'force-dynamic';
+
 export default function ContactPage() {
   const { isArabic } = useLanguage();
   const { success, error: showError } = useToast();

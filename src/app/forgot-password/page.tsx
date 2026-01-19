@@ -9,6 +9,8 @@ import { useLanguage } from '@/context/LanguageContext';
 import { useToast } from '@/context/ToastContext';
 import { authService } from '@/services/api';
 
+export const dynamic = 'force-dynamic';
+
 interface ForgotPasswordFormData {
   email: string;
 }

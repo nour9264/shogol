@@ -45,6 +45,7 @@ interface FreelancerDetails {
     email: string;
     phoneNumber: string;
     profilePictureUrl: string;
+    coverImageUrl?: string | null;
     address: string | null;
     bio: string;
     gender: string;
@@ -59,32 +60,26 @@ interface FreelancerDetails {
     title?: string;
 }
 
-const PublicProfile = () => {
+interface PublicProfileProps {
+    initialProfile?: FreelancerDetails | null;
+}
+
+const PublicProfile = ({ initialProfile }: PublicProfileProps) => {
     const params = useParams();
     const router = useRouter();
     const { t, isArabic } = useLanguage();
     const { isAuthenticated, user } = useAuth();
-    const [profile, setProfile] = useState<FreelancerDetails | null>(null);
-    const [loading, setLoading] = useState(true);
+    const [profile, setProfile] = useState<FreelancerDetails | null>(initialProfile || null);
+    const [loading, setLoading] = useState(!initialProfile);
 
     const fetchProfile = useCallback(async (id: string) => {
         try {
             const response = await userService.getFreelancerDetails(id);
-            console.log('Freelancer Details:', response.data);
+            console.log('Freelancer Details Response:', response.data);
+            console.log('Reviews in response:', response.data.reviews);
+            console.log('Is reviews an array?', Array.isArray(response.data.reviews));
 
-            // Fetch all reviews separately to ensure we get the complete list
-            try {
-                const reviewsResponse = await userService.getFreelancerReviews(id);
-                console.log('All Reviews:', reviewsResponse.data);
-                // Merge the complete reviews list with the profile data
-                setProfile({
-                    ...response.data,
-                    reviews: reviewsResponse.data || response.data.reviews
-                });
-            } catch (reviewError) {
-                console.error('Failed to fetch reviews, using profile reviews:', reviewError);
-                setProfile(response.data);
-            }
+            setProfile(response.data);
         } catch (error) {
             console.error('Failed to fetch profile:', error);
         } finally {
@@ -93,10 +88,10 @@ const PublicProfile = () => {
     }, []);
 
     useEffect(() => {
-        if (params.id) {
+        if (params.id && !initialProfile) {
             fetchProfile(params.id as string);
         }
-    }, [params.id, fetchProfile]);
+    }, [params.id, fetchProfile, initialProfile]);
 
     if (loading) {
         return (
@@ -118,7 +113,7 @@ const PublicProfile = () => {
     const allSkills = profile.skillCategories?.flatMap(cat => cat.skills) || [];
 
     // Calculate average rating from reviews (client-side fallback)
-    const calculatedAverageRating = profile.reviews && profile.reviews.length > 0
+    const calculatedAverageRating = Array.isArray(profile.reviews) && profile.reviews.length > 0
         ? profile.reviews.reduce((sum, review) => sum + review.rating, 0) / profile.reviews.length
         : profile.averageRating || 0;
 
@@ -126,15 +121,28 @@ const PublicProfile = () => {
     console.log('Reviews:', profile.reviews);
     console.log('Backend averageRating:', profile.averageRating);
     console.log('Calculated averageRating:', calculatedAverageRating);
-    console.log('Individual ratings:', profile.reviews?.map(r => r.rating));
+    console.log('Individual ratings:', Array.isArray(profile.reviews) ? profile.reviews.map(r => r.rating) : []);
 
     return (
         <div className="min-h-screen pb-20 transition-colors" style={{ backgroundColor: 'rgb(var(--bg-primary))' }}>
 
             {/* Hero / Cover Section */}
             <div className="relative h-64 md:h-80 w-full overflow-hidden">
-                <div className="absolute inset-0 bg-gradient-to-r from-blue-900 via-indigo-900 to-purple-900 opacity-90"></div>
-                <div className="absolute inset-0 opacity-20" style={{ backgroundImage: 'radial-gradient(circle at 20% 50%, rgba(255,255,255,0.3) 0%, transparent 50%)' }}></div>
+                {profile.coverImageUrl ? (
+                    <img
+                        src={getImageUrl(profile.coverImageUrl)}
+                        alt="Cover"
+                        className="w-full h-full object-cover"
+                        onError={(e) => {
+                            e.currentTarget.style.display = 'none';
+                        }}
+                    />
+                ) : (
+                    <>
+                        <div className="absolute inset-0 bg-gradient-to-r from-blue-900 via-indigo-900 to-purple-900 opacity-90"></div>
+                        <div className="absolute inset-0 opacity-20" style={{ backgroundImage: 'radial-gradient(circle at 20% 50%, rgba(255,255,255,0.3) 0%, transparent 50%)' }}></div>
+                    </>
+                )}
             </div>
 
             <div className="container mx-auto px-4 -mt-24 md:-mt-32 relative z-10">
@@ -297,7 +305,7 @@ const PublicProfile = () => {
                             <h2 className="text-xl font-bold mb-6 flex items-center gap-2" style={{ color: 'rgb(var(--text-primary))' }}>
                                 <FaStar className="text-primary-500" /> {t('reviewsRatings')}
                             </h2>
-                            {(!profile.reviews || profile.reviews.length === 0) ? (
+                            {(!Array.isArray(profile.reviews) || profile.reviews.length === 0) ? (
                                 <div className="text-center py-12 opacity-60 bg-gray-50 dark:bg-white/5 rounded-xl border border-dashed border-gray-200 dark:border-gray-700">
                                     <p style={{ color: 'rgb(var(--text-secondary))' }}>{t('noReviews')}</p>
                                 </div>
@@ -328,6 +336,11 @@ const ReviewSlider = ({ reviews }: { reviews: Review[] }) => {
     }, [reviews.length, nextSlide]);
 
     const currentReview = reviews[currentIndex];
+
+    // Safety check
+    if (!currentReview) {
+        return null;
+    }
 
     return (
         <div className="relative bg-gray-50 dark:bg-white/5 rounded-xl p-6 border border-gray-100 dark:border-white/10">

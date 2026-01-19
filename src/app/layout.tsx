@@ -10,6 +10,7 @@ import Header from '@/components/Layout/Header';
 import Footer from '@/components/Layout/Footer';
 import MainContent from '@/components/Layout/MainContent';
 import ToastContainer from '@/components/Common/ToastContainer';
+import OfflineToast from '@/components/Common/OfflineToast';
 import '@/app/globals.css';
 
 const cairo = Cairo({
@@ -22,10 +23,46 @@ const cairo = Cairo({
 export const metadata: Metadata = {
   title: 'SHOGOL - منصة العمل الحر',
   description: 'منصة احترافية للعمل الحر والبحث عن الموهوبين',
+  manifest: '/manifest.json',
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: 'default',
+    title: 'SHOGOL',
+  },
+  formatDetection: {
+    telephone: false,
+  },
+  openGraph: {
+    type: 'website',
+    siteName: 'SHOGOL',
+    title: 'SHOGOL - منصة العمل الحر',
+    description: 'منصة احترافية للعمل الحر والبحث عن الموهوبين',
+  },
+  twitter: {
+    card: 'summary',
+    title: 'SHOGOL - منصة العمل الحر',
+    description: 'منصة احترافية للعمل الحر والبحث عن الموهوبين',
+  },
+  icons: {
+    icon: [
+      { url: '/icons/icon-192x192.png', sizes: '192x192', type: 'image/png' },
+      { url: '/icons/icon-512x512.png', sizes: '512x512', type: 'image/png' },
+    ],
+    apple: [
+      { url: '/icons/icon-152x152.png', sizes: '152x152', type: 'image/png' },
+    ],
+  },
 };
 
 export const viewport: Viewport = {
-  themeColor: '#ffffff',
+  themeColor: [
+    { media: '(prefers-color-scheme: light)', color: '#ffffff' },
+    { media: '(prefers-color-scheme: dark)', color: '#0f172a' },
+  ],
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 5,
+  userScalable: true,
 };
 
 // Script to prevent flash of wrong theme - default to light mode
@@ -69,6 +106,7 @@ export default function RootLayout({
                       </MainContent>
                     </main>
                     <ToastContainer />
+                    <OfflineToast />
                   </div>
                 </NotificationProvider>
               </ToastProvider>

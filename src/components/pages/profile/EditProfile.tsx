@@ -10,6 +10,7 @@ import ProtectedRoute from '@/components/Common/ProtectedRoute';
 import { getImageUrl, validateImageFile } from '@/utils/helpers';
 import { FaCamera, FaSpinner } from 'react-icons/fa';
 import ImageCropper from '@/components/Common/ImageCropper';
+import CoverImageManager from './CoverImageManager';
 import styles from './EditProfile.module.css';
 
 interface EditProfileFormData {
@@ -139,6 +140,9 @@ const EditProfile = () => {
       <div className="container-custom max-w-2xl">
         <div className="card">
           <h1 className="text-3xl font-bold mb-8" style={{ color: 'rgb(var(--text-primary))' }}>تعديل الملف الشخصي</h1>
+
+          {/* Cover Image Section - Only for Freelancers */}
+          {user.isFreelancer && <CoverImageManager />}
 
           <div className="flex flex-col items-center mb-8">
             <div className="relative">

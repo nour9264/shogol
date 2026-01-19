@@ -8,6 +8,7 @@ import { getImageUrl, DEFAULT_AVATAR } from '@/utils/helpers';
 import ProtectedRoute from '@/components/Common/ProtectedRoute';
 import SkillsManager from './SkillsManager';
 import BioManager from './BioManager';
+import CoverImageManager from './CoverImageManager';
 import PortfolioManager from './PortfolioManager';
 import styles from './Profile.module.css';
 
@@ -76,6 +77,11 @@ const Profile = () => {
         {/* Freelancer-only sections */}
         {(user.isFreelancer || user.userType === 'Freelancer') && (
           <>
+            {/* Cover Image Manager */}
+            <div className="mt-6">
+              <CoverImageManager />
+            </div>
+
             {/* Skills Manager */}
             <div className="mt-6">
               <SkillsManager />
