@@ -33,7 +33,7 @@ import {
 import type { JobRequest, Proposal } from '@/types';
 import styles from './JobDetails.module.css';
 
-const JobDetails = () => {
+const JobDetails = ({ initialJob }: { initialJob?: JobRequest | null }) => {
   const params = useParams();
   const router = useRouter();
   const id = params?.id as string;
@@ -41,8 +41,8 @@ const JobDetails = () => {
   const { isArabic } = useLanguage();
   const { success, error: showError } = useToast();
 
-  const [job, setJob] = useState<JobRequest | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [job, setJob] = useState<JobRequest | null>(initialJob || null);
+  const [loading, setLoading] = useState(!initialJob);
   const [deleting, setDeleting] = useState(false);
   const [showProposalModal, setShowProposalModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
@@ -76,10 +76,10 @@ const JobDetails = () => {
   }, [showProposalModal, showDeleteModal]);
 
   useEffect(() => {
-    if (id) {
+    if (id && !initialJob) {
       fetchJobDetails();
     }
-  }, [id]);
+  }, [id, initialJob]);
 
   const fetchJobDetails = async () => {
     try {
