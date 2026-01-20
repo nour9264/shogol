@@ -11,6 +11,8 @@ declare global {
 }
 
 
+
+// Always use proxy paths - vercel.json rewrites will handle backend routing
 export const API_BASE_URL = '/api-proxy';
 export const HUB_URL = '/chatHub';
 export const NOTIFICATION_HUB_URL = '/notificationHub';

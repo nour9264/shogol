@@ -1,0 +1,16 @@
+{
+    "rewrites": [
+        {
+            "source": "/api-proxy/(.*)",
+            "destination": "https://globallink.runasp.net/api/$1"
+        },
+        {
+            "source": "/notificationHub/(.*)",
+            "destination": "https://globallink.runasp.net/notificationHub/$1"
+        },
+        {
+            "source": "/chatHub/(.*)",
+            "destination": "https://globallink.runasp.net/chatHub/$1"
+        }
+    ]
+}
