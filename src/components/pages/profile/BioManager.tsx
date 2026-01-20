@@ -129,7 +129,7 @@ const BioManager = () => {
                                     <span className="text-sm text-yellow-500">{t('goodBio')}</span>
                                 )}
                                 {bio.length >= 50 && (
-                                    <span className="text-sm text-green-500">{t('excellent')}</span>
+                                    <span className="text-sm text-green-500">{t('bioExcellent')}</span>
                                 )}
                             </div>
                         </div>
