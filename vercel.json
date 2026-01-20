@@ -2,15 +2,15 @@
     "rewrites": [
         {
             "source": "/api-proxy/(.*)",
-            "destination": "https://globallink.runasp.net/api/$1"
+            "destination": "https://shogol.runasp.net/api/$1"
         },
         {
             "source": "/notificationHub/(.*)",
-            "destination": "https://globallink.runasp.net/notificationHub/$1"
+            "destination": "https://shogol.runasp.net/notificationHub/$1"
         },
         {
             "source": "/chatHub/(.*)",
-            "destination": "https://globallink.runasp.net/chatHub/$1"
+            "destination": "https://shogol.runasp.net/chatHub/$1"
         }
     ]
 }

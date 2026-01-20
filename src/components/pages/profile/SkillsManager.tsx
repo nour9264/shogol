@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { userService } from '@/services/api';
 import { useToast } from '@/context/ToastContext';
+import { useLanguage } from '@/context/LanguageContext';
 import { FaPlus, FaTrash, FaTimes } from 'react-icons/fa';
 
 interface UserSkill {
@@ -30,6 +31,7 @@ interface SkillCategory {
 
 const SkillsManager = () => {
     const { success, error: showError } = useToast();
+    const { t } = useLanguage();
     const [userSkills, setUserSkills] = useState<UserSkill[]>([]);
     const [availableSkills, setAvailableSkills] = useState<SkillCategory[]>([]);
     const [loading, setLoading] = useState(true);
@@ -51,7 +53,7 @@ const SkillsManager = () => {
             setUserSkills(Array.isArray(skills) ? skills : []);
         } catch (error) {
             console.error('Failed to fetch user skills:', error);
-            showError('فشل تحميل المهارات');
+            showError(t('failedLoadSkills'));
         } finally {
             setLoading(false);
         }
@@ -68,32 +70,32 @@ const SkillsManager = () => {
     };
 
     const handleDeleteSkill = async (userSkillId: number) => {
-        if (!confirm('هل أنت متأكد من حذف هذه المهارة؟')) return;
+        if (!confirm(t('confirmDeleteSkill'))) return;
 
         try {
             await userService.removeSkill(userSkillId);
-            success('تم حذف المهارة بنجاح');
+            success(t('skillDeleted'));
             fetchUserSkills();
         } catch (error) {
-            showError('فشل حذف المهارة');
+            showError(t('skillDeleteFailed'));
         }
     };
 
     const handleAddSkills = async () => {
         if (selectedSkills.length === 0) {
-            showError('يرجى اختيار مهارة واحدة على الأقل');
+            showError(t('selectAtLeastOneSkill'));
             return;
         }
 
         setAdding(true);
         try {
             await userService.addMultipleSkills(selectedSkills);
-            success('تم إضافة المهارات بنجاح');
+            success(t('skillsAdded'));
             setShowAddModal(false);
             setSelectedSkills([]);
             fetchUserSkills();
         } catch (error) {
-            showError('فشل إضافة المهارات');
+            showError(t('skillsAddFailed'));
         } finally {
             setAdding(false);
         }
@@ -137,19 +139,19 @@ const SkillsManager = () => {
             <div className="card">
                 <div className="flex items-center justify-between mb-6">
                     <h2 className="text-2xl font-bold" style={{ color: 'rgb(var(--text-primary))' }}>
-                        المهارات
+                        {t('skills')}
                     </h2>
                     <button
                         onClick={() => setShowAddModal(true)}
                         className="btn btn-primary flex items-center gap-2"
                     >
-                        <FaPlus /> إضافة مهارة
+                        <FaPlus /> {t('addSkill')}
                     </button>
                 </div>
 
                 {userSkills.length === 0 ? (
                     <p style={{ color: 'rgb(var(--text-secondary))' }} className="text-center py-8">
-                        لم تقم بإضافة أي مهارات بعد
+                        {t('noSkillsAdded')}
                     </p>
                 ) : (
                     <div className="flex flex-wrap gap-3">
@@ -168,7 +170,7 @@ const SkillsManager = () => {
                                 <button
                                     onClick={() => handleDeleteSkill(skill.id)}
                                     className="text-red-500 hover:text-red-700 transition-colors"
-                                    title="حذف"
+                                    title={t('delete')}
                                 >
                                     <FaTrash size={14} />
                                 </button>
@@ -197,7 +199,7 @@ const SkillsManager = () => {
                         <div className="p-6 border-b flex-shrink-0" style={{ borderColor: 'rgb(var(--border-primary))' }}>
                             <div className="flex items-center justify-between">
                                 <h3 className="text-2xl font-bold" style={{ color: 'rgb(var(--text-primary))' }}>
-                                    إضافة مهارات جديدة
+                                    {t('addNewSkills')}
                                 </h3>
                                 <button
                                     onClick={() => setShowAddModal(false)}
@@ -208,7 +210,7 @@ const SkillsManager = () => {
                                 </button>
                             </div>
                             <p className="mt-2" style={{ color: 'rgb(var(--text-secondary))' }}>
-                                المهارات المحددة: <span className="font-bold text-primary-500">{selectedSkills.length}</span>
+                                {t('selectedSkillsCount')}: <span className="font-bold text-primary-500">{selectedSkills.length}</span>
                             </p>
                         </div>
 
@@ -216,7 +218,7 @@ const SkillsManager = () => {
                         <div className="p-6 overflow-y-auto flex-1" style={{ minHeight: 0 }}>
                             {filteredCategories.length === 0 ? (
                                 <p className="text-center py-8" style={{ color: 'rgb(var(--text-secondary))' }}>
-                                    لقد أضفت جميع المهارات المتاحة!
+                                    {t('allSkillsAdded')}
                                 </p>
                             ) : (
                                 <div className="space-y-4">
@@ -283,7 +285,7 @@ const SkillsManager = () => {
                                     color: selectedSkills.length > 0 ? 'white' : 'rgb(var(--text-secondary))'
                                 }}
                             >
-                                {adding ? 'جاري الإضافة...' : `إضافة ${selectedSkills.length > 0 ? `(${selectedSkills.length})` : ''}`}
+                                {adding ? t('processing') : `${t('addSkill')} ${selectedSkills.length > 0 ? `(${selectedSkills.length})` : ''}`}
                             </button>
                             <button
                                 onClick={() => setShowAddModal(false)}
@@ -293,7 +295,7 @@ const SkillsManager = () => {
                                     color: 'rgb(var(--text-primary))'
                                 }}
                             >
-                                إلغاء
+                                {t('cancel')}
                             </button>
                         </div>
                     </div>

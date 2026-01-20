@@ -4,10 +4,12 @@ import { useState, useEffect } from 'react';
 import { userService } from '@/services/api';
 import { useToast } from '@/context/ToastContext';
 import { useAuth } from '@/context/AuthContext';
+import { useLanguage } from '@/context/LanguageContext';
 import { FaEdit, FaSave, FaTimes } from 'react-icons/fa';
 
 const BioManager = () => {
     const { user, updateUser } = useAuth();
+    const { t } = useLanguage();
     const { success, error: showError } = useToast();
     const [bio, setBio] = useState('');
     const [isEditing, setIsEditing] = useState(false);
@@ -53,7 +55,7 @@ const BioManager = () => {
 
     const handleSave = async () => {
         if (bio.trim().length < 10) {
-            showError('السيرة الذاتية يجب أن تكون 10 أحرف على الأقل');
+            showError(t('minChars'));
             return;
         }
 
@@ -63,10 +65,10 @@ const BioManager = () => {
             if (user) {
                 updateUser({ ...user, bio });
             }
-            success('تم تحديث السيرة الذاتية بنجاح');
+            success(t('bioUpdated'));
             setIsEditing(false);
         } catch (error) {
-            showError('فشل تحديث السيرة الذاتية');
+            showError(t('bioUpdateFailed'));
         } finally {
             setSaving(false);
         }
@@ -83,14 +85,14 @@ const BioManager = () => {
         <div className="card">
             <div className="flex items-center justify-between mb-6">
                 <h2 className="text-2xl font-bold" style={{ color: 'rgb(var(--text-primary))' }}>
-                    السيرة الذاتية
+                    {t('bioTitle')}
                 </h2>
                 {!isEditing && !loading && (
                     <button
                         onClick={() => setIsEditing(true)}
                         className="btn btn-primary flex items-center gap-2"
                     >
-                        <FaEdit /> تعديل
+                        <FaEdit /> {t('edit')}
                     </button>
                 )}
             </div>
@@ -111,23 +113,23 @@ const BioManager = () => {
                                 color: 'rgb(var(--text-primary))',
                                 borderColor: 'rgb(var(--border-secondary))'
                             }}
-                            placeholder="اكتب نبذة عن نفسك، خبراتك، ومهاراتك..."
+                            placeholder={t('bioPlaceholder')}
                         />
 
                         {/* Character Counter */}
                         <div className="flex items-center justify-between mt-2">
                             <span className="text-sm" style={{ color: 'rgb(var(--text-secondary))' }}>
-                                {bio.length} / {maxLength} حرف
+                                {bio.length} / {maxLength} {t('char')}
                             </span>
                             <div className="flex items-center gap-2">
                                 {bio.length < 10 && (
-                                    <span className="text-sm text-red-500">الحد الأدنى 10 أحرف</span>
+                                    <span className="text-sm text-red-500">{t('minChars')}</span>
                                 )}
                                 {bio.length >= 10 && bio.length < 50 && (
-                                    <span className="text-sm text-yellow-500">جيد، لكن يمكنك إضافة المزيد</span>
+                                    <span className="text-sm text-yellow-500">{t('goodBio')}</span>
                                 )}
                                 {bio.length >= 50 && (
-                                    <span className="text-sm text-green-500">ممتاز!</span>
+                                    <span className="text-sm text-green-500">{t('excellent')}</span>
                                 )}
                             </div>
                         </div>
@@ -147,13 +149,13 @@ const BioManager = () => {
                     {/* Tips */}
                     <div className="p-4 rounded-lg" style={{ backgroundColor: 'rgb(var(--bg-tertiary))' }}>
                         <h4 className="font-bold mb-2" style={{ color: 'rgb(var(--text-primary))' }}>
-                            💡 نصائح لكتابة سيرة ذاتية جيدة:
+                            {t('bioTipsTitle')}
                         </h4>
                         <ul className="space-y-1 text-sm" style={{ color: 'rgb(var(--text-secondary))' }}>
-                            <li>• اذكر خبراتك ومهاراتك الرئيسية</li>
-                            <li>• أضف أمثلة على مشاريع سابقة</li>
-                            <li>• كن واضحاً ومختصراً</li>
-                            <li>• اذكر ما يميزك عن الآخرين</li>
+                            <li>{t('bioTip1')}</li>
+                            <li>{t('bioTip2')}</li>
+                            <li>{t('bioTip3')}</li>
+                            <li>{t('bioTip4')}</li>
                         </ul>
                     </div>
 
@@ -171,12 +173,12 @@ const BioManager = () => {
                             {saving ? (
                                 <>
                                     <div className="inline-block w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
-                                    جاري الحفظ...
+                                    {t('save')}...
                                 </>
                             ) : (
                                 <>
                                     <FaSave className="inline ml-2" />
-                                    حفظ
+                                    {t('save')}
                                 </>
                             )}
                         </button>
@@ -190,7 +192,7 @@ const BioManager = () => {
                             }}
                         >
                             <FaTimes className="inline ml-2" />
-                            إلغاء
+                            {t('cancel')}
                         </button>
                     </div>
                 </div>
@@ -202,7 +204,7 @@ const BioManager = () => {
                         </p>
                     ) : (
                         <p className="text-center py-8" style={{ color: 'rgb(var(--text-secondary))' }}>
-                            لم تقم بإضافة سيرة ذاتية بعد. اضغط على "تعديل" لإضافة سيرتك الذاتية.
+                            {t('noBioSet')}
                         </p>
                     )}
                 </div>

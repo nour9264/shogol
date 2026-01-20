@@ -178,15 +178,40 @@ const Header = () => {
             )}
           </div>
 
-          <button onClick={toggleMobileMenu} className="md:hidden p-2 text-gray-700 dark:text-gray-200">
-            {mobileMenuOpen ? <FaTimes size={24} /> : <FaBars size={24} />}
-          </button>
+          {/* Mobile Theme & Language Toggles - Visible on mobile only */}
+          <div className="flex md:hidden items-center gap-2">
+            {/* Theme Toggle */}
+            <button
+              onClick={toggleTheme}
+              className="p-2 rounded-full transition-all duration-300"
+              style={{ backgroundColor: 'rgb(var(--bg-tertiary))', color: 'rgb(var(--text-primary))' }}
+              title={isDark ? t('lightMode') : t('darkMode')}
+            >
+              {isDark ? <FaSun size={18} className="text-yellow-400" /> : <FaMoon size={18} className="text-indigo-500" />}
+            </button>
+
+            {/* Language Toggle */}
+            <button
+              onClick={toggleLanguage}
+              className="flex items-center gap-1 px-2.5 py-1.5 rounded-full transition-all duration-300 text-sm font-medium"
+              style={{ backgroundColor: 'rgb(var(--bg-tertiary))', color: 'rgb(var(--text-primary))' }}
+              title={isArabic ? 'Switch to English' : 'التبديل إلى العربية'}
+            >
+              <FaGlobe size={14} />
+              <span>{isArabic ? 'EN' : 'ع'}</span>
+            </button>
+
+            {/* Hamburger Menu */}
+            <button onClick={toggleMobileMenu} className="p-2 text-gray-700 dark:text-gray-200">
+              {mobileMenuOpen ? <FaTimes size={24} /> : <FaBars size={24} />}
+            </button>
+          </div>
         </div>
 
         {
           mobileMenuOpen && (
             <div className="md:hidden py-4 border-t border-gray-200 dark:border-gray-700">
-              <nav className="flex flex-col gap-4">
+              <nav className="flex flex-col gap-4 w-full" style={{ direction: isArabic ? 'rtl' : 'ltr', textAlign: isArabic ? 'right' : 'left' }}>
                 {/* Mobile Theme & Language Toggles */}
                 <div className="flex items-center gap-3 pb-4 border-b border-gray-200 dark:border-gray-700">
                   <button
@@ -228,7 +253,6 @@ const Header = () => {
                 {isAuthenticated ? (
                   <>
                     <hr className="my-2 border-gray-200 dark:border-gray-700" />
-                    {/* User Info with Type Badge */}
                     <div className="flex items-center gap-3 py-2">
                       <img
                         src={getImageUrl(user?.profilePictureUrl)}
@@ -236,7 +260,7 @@ const Header = () => {
                         className="w-10 h-10 rounded-full object-cover border-2 border-gray-200 dark:border-gray-600"
                       />
                       <div>
-                        <span className="font-medium text-gray-700 dark:text-gray-200 block">{user?.firstName} {user?.lastName}</span>
+                        <span className="font-bold block" style={{ color: 'rgb(var(--text-primary))' }}>{user?.firstName} {user?.lastName}</span>
                         <span className={`text-xs px-2 py-0.5 rounded-full inline-block ${user?.isClient
                           ? 'bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300'
                           : 'bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300'
@@ -245,10 +269,10 @@ const Header = () => {
                         </span>
                       </div>
                     </div>
-                    <Link href="/profile" className="text-gray-700 dark:text-gray-200 hover:text-primary-600 dark:hover:text-primary-400 font-medium transition-colors" onClick={toggleMobileMenu}>
+                    <Link href="/profile" className="font-bold transition-colors hover:text-primary-600 dark:hover:text-primary-400" style={{ color: 'rgb(var(--text-primary))' }} onClick={toggleMobileMenu}>
                       {t('profile')}
                     </Link>
-                    <Link href="/notifications" className="text-gray-700 dark:text-gray-200 hover:text-primary-600 dark:hover:text-primary-400 font-medium transition-colors flex items-center gap-2" onClick={toggleMobileMenu}>
+                    <Link href="/notifications" className="font-bold transition-colors hover:text-primary-600 dark:hover:text-primary-400 flex items-center gap-2" style={{ color: 'rgb(var(--text-primary))' }} onClick={toggleMobileMenu}>
                       {t('notifications')}
                       {unreadCount > 0 && (
                         <span className="bg-red-500 text-white text-xs px-2 py-1 rounded-full">
@@ -256,10 +280,10 @@ const Header = () => {
                         </span>
                       )}
                     </Link>
-                    <Link href="/messages" className="text-gray-700 dark:text-gray-200 hover:text-primary-600 dark:hover:text-primary-400 font-medium transition-colors" onClick={toggleMobileMenu}>
+                    <Link href="/messages" className="font-bold transition-colors hover:text-primary-600 dark:hover:text-primary-400" style={{ color: 'rgb(var(--text-primary))' }} onClick={toggleMobileMenu}>
                       {t('messages')}
                     </Link>
-                    <button onClick={handleLogout} className="text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 font-medium transition-colors text-right">
+                    <button onClick={handleLogout} className="text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 font-medium transition-colors">
                       {t('logout')}
                     </button>
                   </>

@@ -1,21 +1,26 @@
 import axios, { AxiosInstance, AxiosResponse, InternalAxiosRequestConfig } from 'axios';
 import type { RegisterData, LoginData, AuthResponse, User, JobRequest, Proposal, Freelancer } from '@/types';
 
-// Define global window interface for runtime config
-declare global {
-  interface Window {
-    ENV?: {
-      API_BASE_URL?: string;
-    };
-  }
-}
+// ============================================================================
+// 🔧 API CONFIGURATION - EDIT THESE URLS AS NEEDED
+// ============================================================================
 
+// Option 1: Direct backend (for local development with backend running locally)
+// export const API_BASE_URL = 'https://localhost:7035/api';
+// export const HUB_URL = 'https://localhost:7035/chatHub';
+// export const NOTIFICATION_HUB_URL = 'https://localhost:7035/notificationHub';
 
+// Option 2: Production backend (direct connection - requires CORS to be configured on backend)
+export const API_BASE_URL = 'https://shogol.runasp.net/api';
+export const HUB_URL = 'https://shogol.runasp.net/chatHub';
+export const NOTIFICATION_HUB_URL = 'https://shogol.runasp.net/notificationHub';
 
-// Always use proxy paths - vercel.json rewrites will handle backend routing
-export const API_BASE_URL = '/api-proxy';
-export const HUB_URL = '/chatHub';
-export const NOTIFICATION_HUB_URL = '/notificationHub';
+// Option 3: Proxy (for deployed apps - requires vercel.json or netlify.toml rewrites)
+// export const API_BASE_URL = '/api-proxy';
+// export const HUB_URL = '/chatHub';
+// export const NOTIFICATION_HUB_URL = '/notificationHub';
+
+// ============================================================================
 
 // Extend AxiosRequestConfig to include metadata
 interface ExtendedAxiosRequestConfig extends InternalAxiosRequestConfig {
@@ -255,7 +260,15 @@ export const authService = {
   verifyOtp: (data: { phoneNumber: string; otpCode: string }) =>
     api.post<AuthResponse>('/Auth/verify-otp', data),
 
-  login: (data: LoginData) => api.post<AuthResponse>('/Auth/login', data),
+  login: (data: LoginData) => {
+    // Backend expects 'emailOrPhone' field directly
+    const loginPayload = {
+      emailOrPhone: data.emailOrPhone,
+      password: data.password
+    };
+
+    return api.post<AuthResponse>('/Auth/login', loginPayload);
+  },
 
   resendOtp: (phoneNumber: string) =>
     api.post<AuthResponse>('/Auth/resend-otp', { phoneNumber }),

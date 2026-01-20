@@ -1,0 +1,17 @@
+[[redirects]]
+  from = "/api-proxy/*"
+  to = "https://shogol.runasp.net/api/:splat"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/notificationHub/*"
+  to = "https://shogol.runasp.net/notificationHub/:splat"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/chatHub/*"
+  to = "https://shogol.runasp.net/chatHub/:splat"
+  status = 200
+  force = true

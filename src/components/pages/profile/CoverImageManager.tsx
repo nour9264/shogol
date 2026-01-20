@@ -4,12 +4,14 @@ import { useState, useRef } from 'react';
 import { userService } from '@/services/api';
 import { useToast } from '@/context/ToastContext';
 import { useAuth } from '@/context/AuthContext';
+import { useLanguage } from '@/context/LanguageContext';
 import { FaCamera, FaSpinner } from 'react-icons/fa';
 import ImageCropper from '@/components/Common/ImageCropper';
 import { getImageUrl, validateImageFile } from '@/utils/helpers';
 
 const CoverImageManager = () => {
     const { user, updateUser } = useAuth();
+    const { t } = useLanguage();
     const { success, error: showError } = useToast();
     const [uploading, setUploading] = useState(false);
     const [preview, setPreview] = useState<string | null>(null);
@@ -25,7 +27,7 @@ const CoverImageManager = () => {
 
         const validation = validateImageFile(file, 5);
         if (!validation.valid) {
-            showError(validation.error || 'صورة غير صالحة');
+            showError(validation.error || t('invalidImage'));
             return;
         }
 
@@ -60,9 +62,9 @@ const CoverImageManager = () => {
             if (user && response.data.imageUrl) {
                 updateUser({ ...user, coverImageUrl: response.data.imageUrl });
             }
-            success('تم تحديث صورة الغلاف بنجاح');
+            success(t('coverImageUpdated'));
         } catch (error: any) {
-            showError(error.response?.data?.message || 'فشل تحميل صورة الغلاف');
+            showError(error.response?.data?.message || t('coverImageUpdateFailed'));
             setPreview(null);
         }
         setUploading(false);
@@ -86,7 +88,7 @@ const CoverImageManager = () => {
         <>
             <div className="mb-8">
                 <h2 className="text-xl font-bold mb-4" style={{ color: 'rgb(var(--text-primary))' }}>
-                    صورة الغلاف
+                    {t('coverImage')}
                 </h2>
                 <div className="relative w-full h-48 rounded-xl overflow-hidden bg-gradient-to-r from-blue-900 via-indigo-900 to-purple-900">
                     {(preview || user.coverImageUrl) && (
@@ -106,12 +108,12 @@ const CoverImageManager = () => {
                             {uploading ? (
                                 <>
                                     <FaSpinner className="animate-spin" />
-                                    <span>جاري التحميل...</span>
+                                    <span>{t('processing')}...</span>
                                 </>
                             ) : (
                                 <>
                                     <FaCamera />
-                                    <span>{user.coverImageUrl ? 'تغيير صورة الغلاف' : 'إضافة صورة غلاف'}</span>
+                                    <span>{user.coverImageUrl ? t('changeCoverImage') : t('addCoverImage')}</span>
                                 </>
                             )}
                         </button>
@@ -125,7 +127,7 @@ const CoverImageManager = () => {
                     />
                 </div>
                 <p className="text-sm text-gray-500 mt-2 text-center">
-                    الأبعاد الموصى بها: 1920x400 بكسل (نسبة 16:9)
+                    {t('recommendedDimensions')}
                 </p>
             </div>
 
@@ -137,7 +139,7 @@ const CoverImageManager = () => {
                     onCancel={handleCropCancel}
                     aspectRatio={16 / 9}
                     cropShape="rect"
-                    title="قص صورة الغلاف"
+                    title={t('cropCoverImage')}
                 />
             )}
         </>

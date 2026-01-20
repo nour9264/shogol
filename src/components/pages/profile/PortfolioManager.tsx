@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { userService } from '@/services/api';
 import { useToast } from '@/context/ToastContext';
+import { useLanguage } from '@/context/LanguageContext';
 import { FaPlus, FaTrash, FaTimes, FaLink, FaImage } from 'react-icons/fa';
 import { getImageUrl } from '@/utils/helpers';
 
@@ -17,6 +18,7 @@ interface Portfolio {
 
 const PortfolioManager = () => {
     const { success, error: showError } = useToast();
+    const { t } = useLanguage();
     const [portfolios, setPortfolios] = useState<Portfolio[]>([]);
     const [loading, setLoading] = useState(true);
     const [showAddModal, setShowAddModal] = useState(false);
@@ -42,7 +44,7 @@ const PortfolioManager = () => {
             setPortfolios(Array.isArray(data) ? data : []);
         } catch (error) {
             console.error('Failed to fetch portfolios:', error);
-            showError('فشل تحميل الأعمال');
+            showError(t('failedLoadPortfolio'));
         } finally {
             setLoading(false);
         }
@@ -64,12 +66,12 @@ const PortfolioManager = () => {
         e.preventDefault();
 
         if (!title.trim()) {
-            showError('عنوان المشروع مطلوب');
+            showError(t('projectTitleRequired'));
             return;
         }
 
         if (!selectedImage) {
-            showError('صورة المشروع مطلوبة');
+            showError(t('projectImageRequired'));
             return;
         }
 
@@ -83,27 +85,28 @@ const PortfolioManager = () => {
             formData.append('Image', selectedImage);
 
             await userService.addPortfolio(formData);
-            success('تم إضافة المشروع بنجاح');
+            await userService.addPortfolio(formData);
+            success(t('projectAdded'));
             setShowAddModal(false);
             resetForm();
             fetchPortfolios();
         } catch (error) {
             console.error('Add portfolio error:', error);
-            showError('فشل إضافة المشروع');
+            showError(t('projectAddFailed'));
         } finally {
             setAdding(false);
         }
     };
 
     const handleDeletePortfolio = async (id: number) => {
-        if (!confirm('هل أنت متأكد من حذف هذا المشروع؟')) return;
+        if (!confirm(t('confirmDeleteProject'))) return;
 
         try {
             await userService.deletePortfolio(id);
-            success('تم حذف المشروع بنجاح');
+            success(t('projectDeleted'));
             setPortfolios(prev => prev.filter(p => p.id !== id));
         } catch (error) {
-            showError('فشل حذف المشروع');
+            showError(t('projectDeleteFailed'));
         }
     };
 
@@ -136,13 +139,13 @@ const PortfolioManager = () => {
             <div className="card">
                 <div className="flex items-center justify-between mb-6">
                     <h2 className="text-2xl font-bold" style={{ color: 'rgb(var(--text-primary))' }}>
-                        معرض الأعمال
+                        {t('portfolio')}
                     </h2>
                     <button
                         onClick={() => setShowAddModal(true)}
                         className="btn btn-primary flex items-center gap-2"
                     >
-                        <FaPlus /> إضافة عمل
+                        <FaPlus /> {t('addWork')}
                     </button>
                 </div>
 
@@ -152,7 +155,7 @@ const PortfolioManager = () => {
                             <FaImage className="text-4xl opacity-20" style={{ color: 'rgb(var(--text-secondary))' }} />
                         </div>
                         <p style={{ color: 'rgb(var(--text-secondary))' }}>
-                            لم تقم بإضافة أي أعمال بعد. أضف أعمالك لتجذب المزيد من العملاء!
+                            {t('noWorksAdded')}
                         </p>
                     </div>
                 ) : (
@@ -176,7 +179,7 @@ const PortfolioManager = () => {
                                         <button
                                             onClick={() => handleDeletePortfolio(portfolio.id)}
                                             className="p-3 bg-red-500 text-white rounded-full hover:bg-red-600 transition-colors transform translate-y-4 group-hover:translate-y-0 duration-300"
-                                            title="حذف"
+                                            title={t('delete')}
                                         >
                                             <FaTrash />
                                         </button>
@@ -186,7 +189,7 @@ const PortfolioManager = () => {
                                                 target="_blank"
                                                 rel="noopener noreferrer"
                                                 className="p-3 bg-white text-gray-900 rounded-full hover:bg-gray-100 transition-colors transform translate-y-4 group-hover:translate-y-0 duration-300 delay-75"
-                                                title="عرض المشروع"
+                                                title={t('viewProjectLink')}
                                             >
                                                 <FaLink />
                                             </a>
@@ -222,7 +225,7 @@ const PortfolioManager = () => {
                     >
                         <div className="p-6 border-b flex-shrink-0 flex justify-between items-center" style={{ borderColor: 'rgb(var(--border-primary))' }}>
                             <h3 className="text-2xl font-bold" style={{ color: 'rgb(var(--text-primary))' }}>
-                                إضافة عمل جديد
+                                {t('addNewWork')}
                             </h3>
                             <button
                                 onClick={closeModal}
@@ -238,7 +241,7 @@ const PortfolioManager = () => {
                                 {/* Image Upload */}
                                 <div>
                                     <label className="block text-sm font-medium mb-2" style={{ color: 'rgb(var(--text-secondary))' }}>
-                                        صورة المشروع <span className="text-red-500">*</span>
+                                        {t('projectImage')} <span className="text-red-500">*</span>
                                     </label>
                                     <div
                                         className="border-2 border-dashed rounded-xl p-6 text-center cursor-pointer transition-colors hover:border-primary-500 relative overflow-hidden group"
@@ -261,14 +264,14 @@ const PortfolioManager = () => {
                                                     className="w-full h-full object-contain"
                                                 />
                                                 <div className="absolute inset-0 flex items-center justify-center bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity">
-                                                    <p className="text-white font-medium">تغيير الصورة</p>
+                                                    <p className="text-white font-medium">{t('changeImage')}</p>
                                                 </div>
                                             </div>
                                         ) : (
                                             <div className="py-8">
                                                 <FaImage className="mx-auto text-4xl mb-3 opacity-50" />
                                                 <p className="text-sm font-medium" style={{ color: 'rgb(var(--text-primary))' }}>
-                                                    اضغط لاختيار صورة
+                                                    {t('clickToSelectImage')}
                                                 </p>
                                                 <p className="text-xs mt-1 opacity-70" style={{ color: 'rgb(var(--text-secondary))' }}>
                                                     PNG, JPG, JPEG (Max 5MB)
@@ -281,7 +284,7 @@ const PortfolioManager = () => {
                                 {/* Title */}
                                 <div>
                                     <label className="block text-sm font-medium mb-2" style={{ color: 'rgb(var(--text-secondary))' }}>
-                                        عنوان المشروع <span className="text-red-500">*</span>
+                                        {t('projectTitle')} <span className="text-red-500">*</span>
                                     </label>
                                     <input
                                         type="text"
@@ -293,7 +296,7 @@ const PortfolioManager = () => {
                                             color: 'rgb(var(--text-primary))',
                                             borderColor: 'rgb(var(--border-secondary))'
                                         }}
-                                        placeholder="مثال: متجر إلكتروني متكامل"
+                                        placeholder={t('projectTitlePlaceholder')}
                                         required
                                     />
                                 </div>
@@ -301,7 +304,7 @@ const PortfolioManager = () => {
                                 {/* Description */}
                                 <div>
                                     <label className="block text-sm font-medium mb-2" style={{ color: 'rgb(var(--text-secondary))' }}>
-                                        وصف المشروع
+                                        {t('projectDesc')}
                                     </label>
                                     <textarea
                                         value={description}
@@ -312,14 +315,14 @@ const PortfolioManager = () => {
                                             color: 'rgb(var(--text-primary))',
                                             borderColor: 'rgb(var(--border-secondary))'
                                         }}
-                                        placeholder="اشرح تفاصيل المشروع، التقنيات المستخدمة، ودورك فيه..."
+                                        placeholder={t('projectDescPlaceholder')}
                                     />
                                 </div>
 
                                 {/* Project URL */}
                                 <div>
                                     <label className="block text-sm font-medium mb-2" style={{ color: 'rgb(var(--text-secondary))' }}>
-                                        رابط المشروع
+                                        {t('projectUrl')}
                                     </label>
                                     <div className="relative">
                                         <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -356,9 +359,9 @@ const PortfolioManager = () => {
                                 {adding ? (
                                     <div className="flex items-center justify-center gap-2">
                                         <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                                        جاري الإضافة...
+                                        {t('processing')}...
                                     </div>
-                                ) : 'إضافة المشروع'}
+                                ) : t('addProject')}
                             </button>
                             <button
                                 onClick={closeModal}
@@ -369,7 +372,7 @@ const PortfolioManager = () => {
                                     color: 'rgb(var(--text-primary))'
                                 }}
                             >
-                                إلغاء
+                                {t('cancel')}
                             </button>
                         </div>
                     </div>

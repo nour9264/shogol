@@ -109,7 +109,10 @@ const Login = () => {
                 {t('password')} <span className="text-red-500">*</span>
               </label>
               <div className="relative">
-                <FaLock className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 rtl:right-4 ltr:left-4" />
+                <FaLock
+                  className="absolute top-1/2 -translate-y-1/2 text-gray-400"
+                  style={isArabic ? { right: '1rem' } : { left: '1rem' }}
+                />
                 <input
                   type={showPassword ? 'text' : 'password'}
                   {...register('password', {
@@ -121,7 +124,8 @@ const Login = () => {
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 rtl:left-4 ltr:right-4"
+                  className="absolute top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+                  style={isArabic ? { left: '1rem' } : { right: '1rem' }}
                 >
                   {showPassword ? <FaEyeSlash /> : <FaEye />}
                 </button>
